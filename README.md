@@ -4,14 +4,25 @@
 
 ![](./doc/images/komodo-qt-promo-2020-01.jpg)
 
-Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and smartchains (assetchains). It's available for three OS platforms - Windows, Linux, MacOS.
+## Overview ##
+
+KomodoOcean, also known as Komodo-QT, is the first native graphical wallet for the Komodo ecosystem, which includes the KMD coin and its assetchains (ACs). Built with the Qt framework, it offers an easy-to-use interface for managing Komodo assets. With KomodoOcean, users can send and receive KMD and interact with assetchains (ACs), view their transaction history, and access various features of the [Komodo Platform](https://komodoplatform.com/).
+
+While the Komodo assetchains provide advanced privacy features, the main KMD coin does not include these privacy options. KomodoOcean stands out as a pioneering Qt-based wallet for a ZCash fork, especially since ZCash itself still does not have a native Qt wallet.
+
+KomodoOcean is available on three OS platforms: `Windows`, `Linux`, and `macOS`.
 
 Use the default `static` branch and following scripts to build:
 
 - Linux: `build.sh` (native build)
+- Linux (aarch64): `build-aarch64-cross.sh` (cross-compilation for ARM)
 - Windows: `build-win.sh` (cross-compilation for Win)
 - MacOS: `build-mac-cross.sh` (cross-compilation for OSX)
 - MacOS: `build-mac.sh` (native build)
+
+Or use the `static-experimental` branch to access the latest `nightly` features.
+
+Please note that the parent repository [ip-gpu/KomodoOcean](https://github.com/ip-gpu/KomodoOcean) is no longer maintained!
 
 Visit `#🤝│general-support` or `#wallet-ocean-qt` channel in [Komodo Discord](https://komodoplatform.com/discord) for more information.
 
@@ -19,18 +30,31 @@ Visit `#🤝│general-support` or `#wallet-ocean-qt` channel in [Komodo Discord
 
 #### Linux
 
+The following packages are needed:
 ```shell
-#The following packages are needed:
-sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python bison zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 bison zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl
 ```
-
+Build:
 ```shell
 git clone https://github.com/DeckerSU/KomodoOcean --branch static --single-branch
-cd komodo
+cd KomodoOcean
 ./zcutil/fetch-params.sh
 # -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
 ./zcutil/build-linux.sh -j8
-#This can take some time.
+```
+This can take some time.
+
+#### Linux (aarch64)
+
+Install the Cross-Compilation Toolchain:
+
+```shell
+sudo apt install g++-aarch64-linux-gnu
+aarch64-linux-gnu-g++ --version # verify the installation
+```
+Build:
+```shell
+./zcutil/build-aarch64-cross.sh -j8
 ```
 
 #### OSX (Cross-compile)
@@ -59,7 +83,6 @@ brew update
 brew upgrade
 brew tap discoteq/discoteq; brew install flock
 brew install autoconf autogen automake
-# brew install gcc@6
 brew install binutils
 brew install protobuf
 brew install coreutils
@@ -71,8 +94,8 @@ cd komodo
 ./zcutil/fetch-params.sh
 # -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
 ./zcutil/build-mac.sh -j8
-# This can take some time.
 ```
+This can take some time.
 
 macOS 12 (Monterrey) have incompatible version of Xcode `14.2` (Build version 14C18), to build on Monterrey you'll need to install the older version `13.2.1` using the following steps:
 
@@ -87,7 +110,7 @@ sudo xcode-select -switch /Applications/Xcode_13.2.1.app
 xcodebuild -version
 ```
 
-#### Windows
+#### Windows (Cross-compile)
 Use a debian cross-compilation setup with mingw for windows and run:
 ```shell
 sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl cmake mingw-w64
