@@ -1,0 +1,22 @@
+--- old/qtbase/src/corelib/thread/qthread_unix.cpp
++++ new/qtbase/src/corelib/thread/qthread_unix.cpp
+@@ -339,7 +339,7 @@
+             if (Q_LIKELY(thr->d_func()->objectName.isEmpty()))
+                 setCurrentThreadName(thr->metaObject()->className());
+             else
+-                setCurrentThreadName(std::exchange(thr->d_func()->objectName, {}).toLocal8Bit());
++                setCurrentThreadName(qExchange(thr->d_func()->objectName, {}).toLocal8Bit());
+         }
+ #endif
+ 
+--- old/qtbase/src/corelib/thread/qthread_win.cpp
++++ new/qtbase/src/corelib/thread/qthread_win.cpp
+@@ -396,7 +396,7 @@
+     // sets the name of the current thread.
+     qt_set_thread_name(HANDLE(-1), thr->d_func()->objectName.isEmpty()
+                         ? thr->metaObject()->className()
+-                        : std::exchange(thr->d_func()->objectName, {}).toLocal8Bit().constData());
++                        : qExchange(thr->d_func()->objectName, {}).toLocal8Bit().constData());
+ #endif
+ 
+     emit thr->started(QThread::QPrivateSignal());

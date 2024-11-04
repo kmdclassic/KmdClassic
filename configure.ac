@@ -736,6 +736,16 @@ AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_THREAD
 AX_BOOST_CHRONO
 
+dnl Prevent use of std::unary_function, which was removed in C++17,
+dnl and will generate warnings with newer compilers for Boost
+dnl older than 1.80.
+dnl See: https://github.com/boostorg/container_hash/issues/22, https://github.com/boostorg/config/pull/430.
+
+dnl _HAS_AUTO_PTR_ETC check required only for boost 1.72 and older, since 1.73 we can use BOOST_NO_CXX98_FUNCTION_BASE
+AX_CHECK_PREPROC_FLAG([-D_HAS_AUTO_PTR_ETC=0], [BOOST_CPPFLAGS="$BOOST_CPPFLAGS -D_HAS_AUTO_PTR_ETC=0"], [], [$CXXFLAG_WERROR],
+                      [AC_LANG_PROGRAM([[#include <boost/config.hpp>]])])
+AX_CHECK_PREPROC_FLAG([-DBOOST_NO_CXX98_FUNCTION_BASE], [BOOST_CPPFLAGS="$BOOST_CPPFLAGS -DBOOST_NO_CXX98_FUNCTION_BASE"], [], [$CXXFLAG_WERROR],
+                      [AC_LANG_PROGRAM([[#include <boost/config.hpp>]])])
 
 if test x$use_reduce_exports = xyes; then
   AC_MSG_CHECKING([for working boost reduced exports])
@@ -1241,29 +1251,30 @@ esac
 
 echo 
 echo "Options used to compile and link:"
-echo "  with wallet   = $enable_wallet"
-echo "  with gui / qt = $bitcoin_enable_qt"
+echo "  with wallet    = $enable_wallet"
+echo "  with gui / qt  = $bitcoin_enable_qt"
 if test x$bitcoin_enable_qt != xno; then
-    echo "    qt version  = $bitcoin_qt_got_major_vers"
-    echo "    with bip70  = $enable_bip70"
-    echo "    with qr     = $use_qr"
+    echo "    qt version   = $bitcoin_qt_got_major_vers"
+    echo "    with bip70   = $enable_bip70"
+    echo "    with qr      = $use_qr"
 fi
-echo "  with zmq      = $use_zmq"
-echo "  with test     = $use_tests"
-dnl echo "  with bench    = $use_bench"
-echo "  with upnp     = $use_upnp"
-echo "  use asm       = $use_asm"
-echo "  debug enabled = $enable_debug"
-echo "  werror        = $enable_werror"
+echo "  with zmq       = $use_zmq"
+echo "  with test      = $use_tests"
+dnl echo "  with bench     = $use_bench"
+echo "  with upnp      = $use_upnp"
+echo "  use asm        = $use_asm"
+echo "  debug enabled  = $enable_debug"
+echo "  werror         = $enable_werror"
 echo
-echo "  target os     = $TARGET_OS"
-echo "  build os      = $build_os"
+echo "  target os      = $TARGET_OS"
+echo "  build os       = $build_os"
 echo
-echo "  CC            = $CC"
-echo "  CFLAGS        = $CFLAGS"
-echo "  CPPFLAGS      = $CPPFLAGS"
-echo "  CXX           = $CXX"
-echo "  CXXFLAGS      = $CXXFLAGS"
-echo "  LDFLAGS       = $LDFLAGS"
-echo "  ARFLAGS       = $ARFLAGS"
+echo "  CC             = $CC"
+echo "  CFLAGS         = $CFLAGS"
+echo "  CPPFLAGS       = $CPPFLAGS"
+echo "  CXX            = $CXX"
+echo "  CXXFLAGS       = $CXXFLAGS"
+echo "  BOOST_CPPFLAGS = $BOOST_CPPFLAGS"
+echo "  LDFLAGS        = $LDFLAGS"
+echo "  ARFLAGS        = $ARFLAGS"
 echo
