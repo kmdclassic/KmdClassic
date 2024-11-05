@@ -51,21 +51,21 @@ jobs:
       # we don't want use strategy / matrix here, bcz in this case matrix will be used
       # for entire job and docker containet will be rebuild several times
       - name: Archive artifacts (Linux)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: komodoocean-linux-${{ steps.set_variables_step.outputs.sha_short }}
           path: |
             ./releases/focal
 
       - name: Archive artifacts (Windows)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: komodoocean-windows-${{ steps.set_variables_step.outputs.sha_short }}
           path: |
             ./releases/windows
 
       - name: Archive artifacts (MacOS)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: komodoocean-macos-${{ steps.set_variables_step.outputs.sha_short }}
           path: |
