@@ -174,6 +174,8 @@ if [[ "${build_xenial}" = "true" ]]; then
     if [[ "${delete_linux_depends}" = true ]]; then
         rm -rf ${WORKSPACE}/depends/built/x86_64-unknown-linux-gnu
         rm -rf ${WORKSPACE}/depends/x86_64-unknown-linux-gnu
+        rm -rf ${WORKSPACE}/depends/built/x86_64-pc-linux-gnu
+        rm -rf ${WORKSPACE}/depends/x86_64-pc-linux-gnu
     fi
     # delete possible artefacts from previous build(s)
     delete_artefacts xenial
@@ -191,6 +193,8 @@ if [[ "${build_focal}" = "true" ]]; then
     if [[ "${delete_linux_depends}" = true ]]; then
         rm -rf ${WORKSPACE}/depends/built/x86_64-unknown-linux-gnu
         rm -rf ${WORKSPACE}/depends/x86_64-unknown-linux-gnu
+        rm -rf ${WORKSPACE}/depends/built/x86_64-pc-linux-gnu
+        rm -rf ${WORKSPACE}/depends/x86_64-pc-linux-gnu
     fi
     # delete possible artefacts from previous build(s)
     delete_artefacts focal

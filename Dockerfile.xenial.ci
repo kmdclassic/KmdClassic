@@ -6,7 +6,7 @@ FROM ubuntu:16.04
 # Run interactive session in build environment:
 # docker run -u $(id -u ${USER}):$(id -g ${USER}) -v $PWD:$PWD -w $PWD -e HOME=/root -it ocean_xenial_builder
 # Run build itself:
-# delete ./built/x86_64-unknown-linux-gnu before build (!) other version of linux, then do:
+# delete ./built/x86_64-unknown-linux-gnu and/or x86_64-pc-linux-gnu before build (!) other version of linux, then do:
 # ./zcutil/clean-help-dev.sh ; make clean ; zcutil/build.sh -j$(nproc --all)
 # 
 # docker run -u $(id -u ${USER}):$(id -g ${USER}) -v $PWD:$PWD -w $PWD -e HOME=/root ocean_xenial_builder /bin/bash -c "./zcutil/clean-help-dev.sh ; make clean ; zcutil/build.sh -j$(nproc --all)"
