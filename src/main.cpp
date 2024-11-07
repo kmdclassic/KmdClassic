@@ -6118,7 +6118,7 @@ bool static LoadBlockIndexDB()
 
     for (const std::pair<int, CBlockIndex*>& item : vSortedByHeight)
     {
-        boost::this_thread::interruption_point();
+        if (ShutdownRequested()) return false;
 
         CBlockIndex* pindex = item.second;
         pindex->nChainWork = (pindex->pprev ? pindex->pprev->nChainWork : 0) + GetBlockProof(*pindex);
