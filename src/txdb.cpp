@@ -36,6 +36,12 @@
 
 #include <boost/thread.hpp>
 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
+#include <atomic>
+
 using namespace std;
 
 // NOTE: Per issue #3277, do not use the prefix 'X' or 'x' as they were
@@ -797,6 +803,151 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
         } else {
             break;
         }
+    }
+
+    uiInterface.ShowProgress("", 100, false);
+    LogPrintf("[%s].\n", ShutdownRequested() ? "CANCELLED" : "DONE");
+
+    return true;
+}
+
+/* Internal variables for Thread Pool */
+std::mutex mapBlockIndex_mutex;
+std::mutex queue_mutex;
+std::condition_variable queue_cond_var;
+std::queue<CDiskBlockIndex> task_queue;
+std::atomic<bool> done(false);
+
+// Worker function
+void lblkIdx_worker() {
+    while (true) {
+        CDiskBlockIndex diskindex;
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            queue_cond_var.wait(lock, [] { return !task_queue.empty() || done.load(); });
+
+            if (done.load() && task_queue.empty())
+                return;
+
+            diskindex = task_queue.front();
+            task_queue.pop();
+        }
+
+        std::lock_guard<std::mutex> map_lock(mapBlockIndex_mutex);
+        // Process diskindex
+        CBlockIndex* pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
+        pindexNew->pprev = InsertBlockIndex(diskindex.hashPrev);
+        pindexNew->nHeight = diskindex.nHeight;
+        pindexNew->nFile = diskindex.nFile;
+        pindexNew->nDataPos = diskindex.nDataPos;
+        pindexNew->nUndoPos = diskindex.nUndoPos;
+        pindexNew->hashSproutAnchor = diskindex.hashSproutAnchor;
+        pindexNew->nVersion = diskindex.nVersion;
+        pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
+        pindexNew->hashFinalSaplingRoot = diskindex.hashFinalSaplingRoot;
+        pindexNew->nTime = diskindex.nTime;
+        pindexNew->nBits = diskindex.nBits;
+        pindexNew->nNonce = diskindex.nNonce;
+        // the Equihash solution will be loaded lazily from the dbindex entry
+        pindexNew->nStatus = diskindex.nStatus;
+        pindexNew->nCachedBranchId = diskindex.nCachedBranchId;
+        pindexNew->nTx = diskindex.nTx;
+        pindexNew->nChainSupplyDelta = diskindex.nChainSupplyDelta;
+        pindexNew->nTransparentValue = diskindex.nTransparentValue;
+        pindexNew->nBurnedAmountDelta = diskindex.nBurnedAmountDelta;
+        pindexNew->nSproutValue = diskindex.nSproutValue;
+        pindexNew->nSaplingValue = diskindex.nSaplingValue;
+        pindexNew->segid = diskindex.segid;
+        pindexNew->nNotaryPay = diskindex.nNotaryPay;
+    }
+}
+
+/* Fast implementation of LoadBlockIndexGuts using Thread Pool */
+bool CBlockTreeDB::LoadBlockIndexGutsFast()
+{
+    std::unique_ptr<CDBIterator> pcursor(NewIterator());
+
+    pcursor->Seek(make_pair(DB_BLOCK_INDEX, uint256()));
+    int reportDone = 0;
+    uiInterface.ShowProgress(_("Loading guts..."), 0, false);
+
+    // Thread pool setup
+    const int num_threads = std::min((unsigned int)MAX_LOADING_GUTS_THREADS, std::thread::hardware_concurrency());
+    std::vector<std::thread> workers;
+    for (int i = 0; i < num_threads; ++i)
+    {
+        workers.emplace_back(lblkIdx_worker);
+    }
+
+    int64_t count = 0;
+    // Load mapBlockIndex
+    while (pcursor->Valid())
+    {
+        boost::this_thread::interruption_point();
+        if (ShutdownRequested())
+        {
+            done.store(true);
+            queue_cond_var.notify_all();
+            for (auto &thread : workers)
+            {
+                thread.join();
+            }
+            return false;
+        }
+
+        std::pair<char, uint256> key;
+        if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX)
+        {
+
+            if (count++ % 1000 == 0)
+            {
+                uint32_t high = 0x100 * *key.second.begin() + *(key.second.begin() + 1);
+                int percentageDone = (int)(high * 100.0 / 65536.0 + 0.5);
+                uiInterface.ShowProgress(_("Loading guts..."), percentageDone, false);
+                if (reportDone < percentageDone / 10)
+                {
+                    // report max. every 10% step
+                    LogPrintf("[%d%%]...", percentageDone); /* Continued */
+                    reportDone = percentageDone / 10;
+                }
+            }
+
+            CDiskBlockIndex diskindex;
+            if (pcursor->GetValue(diskindex))
+            {
+                {
+                    std::lock_guard<std::mutex> lock(queue_mutex);
+                    task_queue.push(diskindex);
+                }
+                queue_cond_var.notify_one();
+
+                pcursor->Next();
+            }
+            else
+            {
+                done.store(true);
+                queue_cond_var.notify_all();
+                for (auto &thread : workers)
+                {
+                    thread.join();
+                }
+                return error("LoadBlockIndex() : failed to read value");
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Indicate that loading is done
+    done.store(true);
+    queue_cond_var.notify_all();
+
+    // Wait for all threads to finish
+    for (auto &thread : workers)
+    {
+        thread.join();
     }
 
     uiInterface.ShowProgress("", 100, false);
