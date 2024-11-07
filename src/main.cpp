@@ -6089,7 +6089,7 @@ bool static LoadBlockIndexDB()
 {
     const CChainParams& chainparams = Params();
     LogPrintf("%s: start loading guts\n", __func__);
-    if (!pblocktree->LoadBlockIndexGuts())
+    if (!pblocktree->LoadBlockIndexGutsFast())
         return false;
     LogPrintf("%s: loaded guts\n", __func__);
     boost::this_thread::interruption_point();
