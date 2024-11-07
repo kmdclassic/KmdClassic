@@ -952,5 +952,11 @@ bool CBlockTreeDB::LoadBlockIndexGutsFast()
     uiInterface.ShowProgress("", 100, false);
     LogPrintf("[%s].\n", ShutdownRequested() ? "CANCELLED" : "DONE");
 
+    std::queue<CDiskBlockIndex> empty;
+    {
+        std::lock_guard<std::mutex> lock(queue_mutex);
+        std::swap(task_queue, empty);
+    }
+
     return true;
 }
