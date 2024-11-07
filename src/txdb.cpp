@@ -811,58 +811,6 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
     return true;
 }
 
-/* Internal variables for Thread Pool */
-std::mutex mapBlockIndex_mutex;
-std::mutex queue_mutex;
-std::condition_variable queue_cond_var;
-std::queue<CDiskBlockIndex> task_queue;
-std::atomic<bool> done(false);
-
-// Worker function
-void lblkIdx_worker() {
-    while (true) {
-        CDiskBlockIndex diskindex;
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            queue_cond_var.wait(lock, [] { return !task_queue.empty() || done.load(); });
-
-            if (done.load() && task_queue.empty())
-                return;
-
-            diskindex = task_queue.front();
-            task_queue.pop();
-        }
-
-        std::lock_guard<std::mutex> map_lock(mapBlockIndex_mutex);
-        // Process diskindex
-        CBlockIndex* pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
-        pindexNew->pprev = InsertBlockIndex(diskindex.hashPrev);
-        pindexNew->nHeight = diskindex.nHeight;
-        pindexNew->nFile = diskindex.nFile;
-        pindexNew->nDataPos = diskindex.nDataPos;
-        pindexNew->nUndoPos = diskindex.nUndoPos;
-        pindexNew->hashSproutAnchor = diskindex.hashSproutAnchor;
-        pindexNew->nVersion = diskindex.nVersion;
-        pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
-        pindexNew->hashFinalSaplingRoot = diskindex.hashFinalSaplingRoot;
-        pindexNew->nTime = diskindex.nTime;
-        pindexNew->nBits = diskindex.nBits;
-        pindexNew->nNonce = diskindex.nNonce;
-        // the Equihash solution will be loaded lazily from the dbindex entry
-        pindexNew->nStatus = diskindex.nStatus;
-        pindexNew->nCachedBranchId = diskindex.nCachedBranchId;
-        pindexNew->nTx = diskindex.nTx;
-        pindexNew->nChainSupplyDelta = diskindex.nChainSupplyDelta;
-        pindexNew->nTransparentValue = diskindex.nTransparentValue;
-        pindexNew->nBurnedAmountDelta = diskindex.nBurnedAmountDelta;
-        pindexNew->nSproutValue = diskindex.nSproutValue;
-        pindexNew->nSaplingValue = diskindex.nSaplingValue;
-        pindexNew->segid = diskindex.segid;
-        pindexNew->nNotaryPay = diskindex.nNotaryPay;
-    }
-}
-
-/* Fast implementation of LoadBlockIndexGuts using Thread Pool */
 bool CBlockTreeDB::LoadBlockIndexGutsFast()
 {
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
@@ -870,6 +818,57 @@ bool CBlockTreeDB::LoadBlockIndexGutsFast()
     pcursor->Seek(make_pair(DB_BLOCK_INDEX, uint256()));
     int reportDone = 0;
     uiInterface.ShowProgress(_("Loading guts..."), 0, false);
+
+    // Local synchronization primitives and shared resources
+    std::mutex mapBlockIndex_mutex;
+    std::mutex queue_mutex;
+    std::condition_variable queue_cond_var;
+    std::queue<CDiskBlockIndex> task_queue;
+    std::atomic<bool> done(false);
+
+    // Lambda for worker threads
+    auto lblkIdx_worker = [&mapBlockIndex_mutex, &queue_mutex, &queue_cond_var, &task_queue, &done]() {
+        while (true) {
+            CDiskBlockIndex diskindex;
+            {
+                std::unique_lock<std::mutex> lock(queue_mutex);
+                queue_cond_var.wait(lock, [&task_queue, &done]() { return !task_queue.empty() || done.load(); });
+
+                if (done.load() && task_queue.empty())
+                    return;
+
+                diskindex = task_queue.front();
+                task_queue.pop();
+            }
+
+            std::lock_guard<std::mutex> map_lock(mapBlockIndex_mutex);
+            // Process diskindex
+            CBlockIndex* pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
+            pindexNew->pprev = InsertBlockIndex(diskindex.hashPrev);
+            pindexNew->nHeight = diskindex.nHeight;
+            pindexNew->nFile = diskindex.nFile;
+            pindexNew->nDataPos = diskindex.nDataPos;
+            pindexNew->nUndoPos = diskindex.nUndoPos;
+            pindexNew->hashSproutAnchor = diskindex.hashSproutAnchor;
+            pindexNew->nVersion = diskindex.nVersion;
+            pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
+            pindexNew->hashFinalSaplingRoot = diskindex.hashFinalSaplingRoot;
+            pindexNew->nTime = diskindex.nTime;
+            pindexNew->nBits = diskindex.nBits;
+            pindexNew->nNonce = diskindex.nNonce;
+            // the Equihash solution will be loaded lazily from the dbindex entry
+            pindexNew->nStatus = diskindex.nStatus;
+            pindexNew->nCachedBranchId = diskindex.nCachedBranchId;
+            pindexNew->nTx = diskindex.nTx;
+            pindexNew->nChainSupplyDelta = diskindex.nChainSupplyDelta;
+            pindexNew->nTransparentValue = diskindex.nTransparentValue;
+            pindexNew->nBurnedAmountDelta = diskindex.nBurnedAmountDelta;
+            pindexNew->nSproutValue = diskindex.nSproutValue;
+            pindexNew->nSaplingValue = diskindex.nSaplingValue;
+            pindexNew->segid = diskindex.segid;
+            pindexNew->nNotaryPay = diskindex.nNotaryPay;
+        }
+    };
 
     // Thread pool setup
     const int num_threads = std::min((unsigned int)MAX_LOADING_GUTS_THREADS, std::thread::hardware_concurrency());
@@ -902,7 +901,7 @@ bool CBlockTreeDB::LoadBlockIndexGutsFast()
             if (count++ % 1000 == 0)
             {
                 uint32_t high = 0x100 * *key.second.begin() + *(key.second.begin() + 1);
-                int percentageDone = (int)(high * 100.0 / 65536.0 + 0.5);
+                int percentageDone = static_cast<int>(high * 100.0 / 65536.0 + 0.5);
                 uiInterface.ShowProgress(_("Loading guts..."), percentageDone, false);
                 if (reportDone < percentageDone / 10)
                 {
