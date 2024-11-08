@@ -278,6 +278,7 @@ public:
      * @returns true on success
      */
     bool LoadBlockIndexGuts();
+    bool LoadBlockIndexGutsFast();
     /****
      * Check if a block is on the active chain
      * @param hash the block hash
