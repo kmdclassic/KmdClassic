@@ -15,9 +15,8 @@ define $(package)_set_vars
 $(package)_build_opts=--frozen --release
 $(package)_build_opts_mingw32=--target=x86_64-pc-windows-gnu
 $(package)_build_opts_aarch64_linux=--target=aarch64-unknown-linux-gnu
-ifneq ($(build_os),darwin)
-$(package)_build_opts_darwin=--target=x86_64-apple-darwin
-endif
+$(package)_build_opts_x86_64_darwin=--target=x86_64-apple-darwin
+$(package)_build_opts_aarch64_darwin=--target=aarch64-apple-darwin
 endef
 
 define $(package)_preprocess_cmds
