@@ -12,7 +12,7 @@ While the Komodo assetchains provide advanced privacy features, the main KMD coi
 
 KomodoOcean is available on three OS platforms: `Windows`, `Linux`, and `macOS`.
 
-Use the default `static` branch and the following scripts to build, depending on your target platform and architecture:
+Use the default `static` branch and the following scripts in `./zcutil` to build, depending on your target platform and architecture:
 
 - **Linux**:
   - `build.sh`: Native build for Linux.

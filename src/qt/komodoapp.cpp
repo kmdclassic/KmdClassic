@@ -736,7 +736,6 @@ int main(int argc, char *argv[])
     }
 
     try {
-//        ReadConfigFile(GetArg("-conf", KOMODO_CONF_FILENAME));
         ReadConfigFile(mapArgs, mapMultiArgs);
     } catch (const std::exception& e) {
         QMessageBox::critical(0, QObject::tr(PACKAGE_NAME),
