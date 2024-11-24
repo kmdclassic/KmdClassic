@@ -11,32 +11,35 @@
 # limitations under the License.
 
 # Build:
-# docker build -f Dockerfile -t komodoocean .
+# docker build -f Dockerfile -t deckersu/komodoocean .
 
 # Prepare data directory and config file:
 # mkdir -p ./komodo-data/.komodo && RANDPASS=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w16 | head -n1) && echo -e "txindex=1\nrpcuser=komodo\nrpcpassword=${RANDPASS}\nrpcallowip=127.0.0.1\nrpcbind=127.0.0.1\nserver=1" > ./komodo-data/.komodo/komodo.conf
 # docker run --rm -v "$(pwd)/komodo-data:/data" ubuntu:18.04 bash -c 'chown -R nobody:nogroup /data'
 
 # Run:
-# docker run -d --rm -p 7770:7770 -v "$(pwd)/komodo-data:/data" komodoocean -printtoconsole=1
+# docker run -d --rm -p 7770:7770 -v "$(pwd)/komodo-data:/data" deckersu/komodoocean -printtoconsole=1
 
 # Run AC (for example VOTE2024):
 # mkdir -p ./VOTE2024/.komodo
 # docker run --rm -v "$(pwd)/VOTE2024:/data" ubuntu:18.04 bash -c 'chown -R nobody:nogroup /data'
-# docker run -d --rm -v "$(pwd)/VOTE2024:/data" komodoocean -printtoconsole=1 -ac_name=VOTE2024 -ac_public=1 -ac_supply=149826699 -ac_staked=10 -addnode=65.21.52.18
+# docker run -d --rm -v "$(pwd)/VOTE2024:/data" deckersu/komodoocean -printtoconsole=1 -ac_name=VOTE2024 -ac_public=1 -ac_supply=149826699 -ac_staked=10 -addnode=65.21.52.18
 
 # Access the container after it's already running:
-# docker ps --filter ancestor=komodoocean # find the id / name of container
+# docker ps --filter ancestor=deckersu/komodoocean # find the id / name of container
 # docker exec -it container_id_or_name /bin/bash # run bash inside the container
 # docker exec -it container_id_or_name /app/komodo-cli getinfo  # run RPC getinfo
 
 # Run container with current user UID:GID:
 # mkdir -p ./komodo-data/.komodo && RANDPASS=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w16 | head -n1) && echo -e "txindex=1\nrpcuser=komodo\nrpcpassword=${RANDPASS}\nrpcallowip=127.0.0.1\nrpcbind=127.0.0.1\nserver=1" > ./komodo-data/.komodo/komodo.conf
-# docker run --rm -d --user $(id -u):$(id -g) -e HOME=/data -v "$(pwd)/komodo-data:/data" komodoocean -no-ownership-check -printtoconsole
+# docker run --rm -d --user $(id -u):$(id -g) -e HOME=/data -v "$(pwd)/komodo-data:/data" deckersu/komodoocean -no-ownership-check -printtoconsole
 
 # Run AC with current user UID:GID:
 # mkdir -p ./VOTE2024/.komodo # pay attention that existance of .komodo folder is important (!)
-# docker run --rm -d --user $(id -u):$(id -g) -e HOME=/data -v "$(pwd)/VOTE2024:/data" komodoocean -no-ownership-check -printtoconsole -ac_name=VOTE2024 -ac_public=1 -ac_supply=149826699 -ac_staked=10 -addnode=65.21.52.182
+# docker run --rm -d --user $(id -u):$(id -g) -e HOME=/data -v "$(pwd)/VOTE2024:/data" deckersu/komodoocean -no-ownership-check -printtoconsole -ac_name=VOTE2024 -ac_public=1 -ac_supply=149826699 -ac_staked=10 -addnode=65.21.52.182
+
+# Build and Push the Multiplatform Image:
+# docker buildx build --platform linux/amd64,linux/arm64 -t deckersu/komodoocean:latest --push .
 
 ## Build komodod
 FROM ubuntu:20.04 as komodod-builder
@@ -57,8 +60,11 @@ RUN set -euxo pipefail \
     && apt-get -y --no-install-recommends dist-upgrade \
     && apt-get -y --no-install-recommends install autoconf automake \
       bsdmainutils build-essential ca-certificates cmake curl dirmngr fakeroot \
-      git g++-multilib gnupg2 libc6-dev libgomp1 libtool m4 ncurses-dev \
+      git g++ gnupg2 libc6-dev libgomp1 libtool m4 ncurses-dev \
       pkg-config python3 zlib1g-dev \
+    && for file in /usr/bin/aarch64-linux-gnu-*; do \
+        ln -s "$file" "/usr/bin/$(basename "$file" | sed 's/aarch64-linux-gnu-/aarch64-unknown-linux-gnu-/')" || true; \
+    done \
     && git clone https://github.com/DeckerSU/KomodoOcean.git \
     && cd /KomodoOcean && git checkout "${KOMODO_COMMITTISH}" \
     && if [ "$IS_RELEASE" = "true" ]; then \
