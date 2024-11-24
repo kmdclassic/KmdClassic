@@ -42,7 +42,7 @@
 # docker buildx build --platform linux/amd64,linux/arm64 -t deckersu/komodoocean:latest --push .
 
 ## Build komodod
-FROM ubuntu:20.04 as komodod-builder
+FROM ubuntu:20.04 AS komodod-builder
 LABEL maintainer="DeckerSU <deckersu@protonmail.com>"
 
 SHELL ["/bin/bash", "-c"]
