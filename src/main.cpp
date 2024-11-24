@@ -5743,86 +5743,6 @@ static bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned 
     return (nFound >= nRequired);
 }
 
-CBlockIndex *komodo_ensure(CBlock *pblock, uint256 hash)
-{
-    CBlockIndex *pindex = 0;
-    BlockMap::iterator miSelf = mapBlockIndex.find(hash);
-    if ( miSelf != mapBlockIndex.end() )
-    {
-        if ( (pindex = miSelf->second) == 0 ) // create pindex so first Accept block doesnt fail
-        {
-            miSelf->second = AddToBlockIndex(*pblock);
-            //LogPrintf("Block header %s is already known, but without pindex -> ensured %p\n",hash.ToString().c_str(),miSelf->second);
-        }
-        /*if ( hash != Params().GetConsensus().hashGenesisBlock )
-        {
-            miSelf = mapBlockIndex.find(pblock->hashPrevBlock);
-            if ( miSelf != mapBlockIndex.end() )
-            {
-                if ( miSelf->second == 0 )
-                {
-                    miSelf->second = InsertBlockIndex(pblock->hashPrevBlock);
-                    LogPrintf("autocreate previndex %s\n",pblock->hashPrevBlock.ToString().c_str());
-                }
-            }
-        }*/
-    }
-    return(pindex);
-}
-
-CBlockIndex *oldkomodo_ensure(CBlock *pblock, uint256 hash)
-{
-    CBlockIndex *pindex=0,*previndex=0;
-    if ( (pindex = komodo_getblockindex(hash)) == 0 )
-    {
-        pindex = new CBlockIndex();
-        if (!pindex)
-            throw runtime_error("komodo_ensure: new CBlockIndex failed");
-        BlockMap::iterator mi = mapBlockIndex.insert(make_pair(hash, pindex)).first;
-        pindex->phashBlock = &((*mi).first);
-    }
-    BlockMap::iterator miSelf = mapBlockIndex.find(hash);
-    if ( miSelf == mapBlockIndex.end() )
-    {
-        LogPrintf("komodo_ensure unexpected missing hash %s\n",hash.ToString().c_str());
-        return(0);
-    }
-    if ( miSelf->second == 0 ) // create pindex so first Accept block doesnt fail
-    {
-        if ( pindex == 0 )
-        {
-            pindex = AddToBlockIndex(*pblock);
-            LogPrintf("ensure call addtoblockindex, got %p\n",pindex);
-        }
-        if ( pindex != 0 )
-        {
-            miSelf->second = pindex;
-            LogPrintf("Block header %s is already known, but without pindex -> ensured %p\n",hash.ToString().c_str(),miSelf->second);
-        } else LogPrintf("komodo_ensure unexpected null pindex\n");
-    }
-    /*if ( hash != Params().GetConsensus().hashGenesisBlock )
-        {
-            miSelf = mapBlockIndex.find(pblock->hashPrevBlock);
-            if ( miSelf == mapBlockIndex.end() )
-                previndex = InsertBlockIndex(pblock->hashPrevBlock);
-            if ( (miSelf= mapBlockIndex.find(pblock->hashPrevBlock)) != mapBlockIndex.end() )
-            {
-                if ( miSelf->second == 0 ) // create pindex so first Accept block doesnt fail
-                {
-                    if ( previndex == 0 )
-                        previndex = InsertBlockIndex(pblock->hashPrevBlock);
-                    if ( previndex != 0 )
-                    {
-                        miSelf->second = previndex;
-                        LogPrintf("autocreate previndex %s\n",pblock->hashPrevBlock.ToString().c_str());
-                    } else LogPrintf("komodo_ensure unexpected null previndex\n");
-                }
-            } else LogPrintf("komodo_ensure unexpected null miprev\n");
-        }
-     }*/
-    return(pindex);
-}
-
 /*****
  * @brief Process a new block
  * @note can come from the network or locally mined
@@ -6169,8 +6089,14 @@ bool static LoadBlockIndexDB()
 {
     const CChainParams& chainparams = Params();
     LogPrintf("%s: start loading guts\n", __func__);
-    if (!pblocktree->LoadBlockIndexGuts())
-        return false;
+    if (GetBoolArg("-fastguts", false)) {
+        /* experimental: faster load, but x2 memory consumption */
+        if (!pblocktree->LoadBlockIndexGutsFast())
+            return false;
+    } else {
+        if (!pblocktree->LoadBlockIndexGuts())
+            return false;
+    }
     LogPrintf("%s: loaded guts\n", __func__);
     boost::this_thread::interruption_point();
     
@@ -6180,7 +6106,7 @@ bool static LoadBlockIndexDB()
     // Calculate nChainWork
     vector<pair<int, CBlockIndex*> > vSortedByHeight;
     vSortedByHeight.reserve(mapBlockIndex.size());
-    BOOST_FOREACH(const PAIRTYPE(uint256, CBlockIndex*)& item, mapBlockIndex)
+    for (const std::pair<uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         vSortedByHeight.push_back(make_pair(pindex->nHeight, pindex));
@@ -6193,9 +6119,12 @@ bool static LoadBlockIndexDB()
     uiInterface.ShowProgress(_("Loading block index DB..."), 0, false);
     int cur_height_num = 0;
 
-    BOOST_FOREACH(const PAIRTYPE(int, CBlockIndex*)& item, vSortedByHeight)
+    const size_t totalBlocks = vSortedByHeight.size();
+    const size_t updateInterval = totalBlocks / 100;
+
+    for (const std::pair<int, CBlockIndex*>& item : vSortedByHeight)
     {
-        boost::this_thread::interruption_point();
+        if (ShutdownRequested()) return false;
 
         CBlockIndex* pindex = item.second;
         pindex->nChainWork = (pindex->pprev ? pindex->pprev->nChainWork : 0) + GetBlockProof(*pindex);
@@ -6275,7 +6204,12 @@ bool static LoadBlockIndexDB()
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == NULL || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
         //komodo_pindex_init(pindex,(int32_t)pindex->nHeight);
-        uiInterface.ShowProgress(_("Loading block index DB..."), (int)((double)(cur_height_num*100)/(double)(vSortedByHeight.size())), false);
+        if (cur_height_num % updateInterval == 0 || cur_height_num == totalBlocks - 1)
+        {
+            int progress = static_cast<int>((static_cast<double>(cur_height_num) / totalBlocks) * 100);
+            uiInterface.ShowProgress(_("Loading block index DB..."), progress, false);
+            // uiInterface.ShowProgress(_("Loading block index DB..."), (int)((double)(cur_height_num*100)/(double)(vSortedByHeight.size())), false);
+        }
         cur_height_num++;
     }
 
@@ -6304,7 +6238,7 @@ bool static LoadBlockIndexDB()
     // Check presence of blk files
     LogPrintf("Checking all blk files are present...\n");
     set<int> setBlkDataFiles;
-    BOOST_FOREACH(const PAIRTYPE(uint256, CBlockIndex*)& item, mapBlockIndex)
+    for (const std::pair<uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         if (pindex->nStatus & BLOCK_HAVE_DATA) {
@@ -6359,7 +6293,7 @@ bool static LoadBlockIndexDB()
     LogPrintf("%s: spent index %s\n", __func__, fSpentIndex ? "enabled" : "disabled");
 
     // Fill in-memory data
-    BOOST_FOREACH(const PAIRTYPE(uint256, CBlockIndex*)& item, mapBlockIndex)
+    for (const std::pair<uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         // - This relationship will always be true even if pprev has multiple
@@ -6726,7 +6660,7 @@ bool InitBlockIndex() {
     if ( pblocktree != nullptr )
     {
         // Use the provided setting for -txindex in the new database
-        fTxIndex = GetBoolArg("-txindex", true);
+        fTxIndex = GetBoolArg("-txindex", DEFAULT_TXINDEX);
         pblocktree->WriteFlag("txindex", fTxIndex);
         // Use the provided setting for -addressindex in the new database
         fAddressIndex = GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX);

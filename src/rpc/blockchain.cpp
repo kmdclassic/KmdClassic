@@ -742,9 +742,7 @@ UniValue getlastsegidstakes(const UniValue& params, bool fHelp, const CPubKey& m
     UniValue objsegids(UniValue::VOBJ);
     for (int8_t i = 0; i < 64; i++)
     {
-        char str[4];
-        sprintf(str, "%d", i);
-        objsegids.push_back(Pair(str,segids[i]));
+        objsegids.push_back(Pair(std::to_string(i), segids[i]));
     }
     ret.push_back(Pair("NotSet",notset));
     ret.push_back(Pair("PoW",pow));

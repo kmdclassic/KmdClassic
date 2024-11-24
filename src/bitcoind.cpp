@@ -27,7 +27,6 @@
 #include "util.h"
 #include "httpserver.h"
 #include "httprpc.h"
-
 #include "komodo.h"
 #include "komodo_defs.h"
 #include "komodo_gateway.h"
@@ -68,14 +67,12 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 {
     int32_t i,height; CBlockIndex *pindex; bool fShutdown = ShutdownRequested();
     static const uint256 zeroid; //!< null uint256 constant
-
     // Tell the main threads to shutdown.
     if (komodo_currentheight()>KOMODO_EARLYTXID_HEIGHT && KOMODO_EARLYTXID!=zeroid && ((height=tx_height(KOMODO_EARLYTXID))==0 || height>KOMODO_EARLYTXID_HEIGHT))
     {
-        LogPrintf("error: earlytx must be before block height %d or tx does not exist\n",KOMODO_EARLYTXID_HEIGHT);
+        fprintf(stderr,"error: earlytx must be before block height %d or tx does not exist\n",KOMODO_EARLYTXID_HEIGHT);
         StartShutdown();
     }
-
     while (!fShutdown)
     {
         /* TODO: move to ThreadUpdateKomodoInternals */
@@ -117,7 +114,6 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 //
 // Start
 //
-
 bool AppInit(int argc, char* argv[])
 {
     boost::thread_group threadGroup;
@@ -156,7 +152,7 @@ bool AppInit(int argc, char* argv[])
     {
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         if (!SelectParamsFromCommandLine()) {
-            LogPrintf("Error: Invalid combination of -regtest and -testnet.\n");
+            fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
             return false;
         }
         void komodo_args(char *argv0);
@@ -164,36 +160,18 @@ bool AppInit(int argc, char* argv[])
         void chainparams_commandline();
         chainparams_commandline();
 
-        LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
-        LogPrintf("initialized %s at %u\n",chainName.symbol().c_str(),(uint32_t)time(NULL));
+        fprintf(stderr, "call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
+        fprintf(stdout, "initialized %s at %u\n",chainName.symbol().c_str(),(uint32_t)time(NULL));
         if (!boost::filesystem::is_directory(GetDataDir(false)))
         {
-            LogPrintf("Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
+            fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
             return false;
         }
         try
         {
             ReadConfigFile(mapArgs, mapMultiArgs);
-        } catch (const missing_zcash_conf& e) {
-            LogPrintf(
-                (_("Before starting komodod, you need to create a configuration file:\n"
-                   "%s\n"
-                   "It can be completely empty! That indicates you are happy with the default\n"
-                   "configuration of komodod. But requiring a configuration file to start ensures\n"
-                   "that komodod won't accidentally compromise your privacy if there was a default\n"
-                   "option you needed to change.\n"
-                   "\n"
-                   "You can look at the example configuration file for suggestions of default\n"
-                   "options that you may want to change. It should be in one of these locations,\n"
-                   "depending on how you installed Komodo:\n") +
-                 _("- Source code:  %s\n"
-                   "- .deb package: %s\n")).c_str(),
-                GetConfigFile().string().c_str(),
-                "contrib/debian/examples/komodo.conf",
-                "/usr/share/doc/komodo/examples/komodo.conf");
-            return false;
         } catch (const std::exception& e) {
-            LogPrintf("Error reading configuration file: %s\n", e.what());
+            fprintf(stderr,"Error reading configuration file: %s\n", e.what());
             return false;
         }
 
@@ -205,7 +183,7 @@ bool AppInit(int argc, char* argv[])
 
         if (fCommandLine)
         {
-            LogPrintf( "Error: There is no RPC client functionality in komodod. Use the komodo-cli utility instead.\n");
+            fprintf(stderr, "Error: There is no RPC client functionality in komodod. Use the komodo-cli utility instead.\n");
             exit(EXIT_FAILURE);
         }
 
@@ -213,13 +191,13 @@ bool AppInit(int argc, char* argv[])
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
-            LogPrintf("Komodo %s server starting\n",chainName.symbol().c_str());
+            fprintf(stdout, "Komodo %s server starting\n",chainName.symbol().c_str());
 
             // Daemonize
             pid_t pid = fork();
             if (pid < 0)
             {
-                LogPrintf( "Error: fork() returned %d errno %d\n", pid, errno);
+                fprintf(stderr, "Error: fork() returned %d errno %d\n", pid, errno);
                 return false;
             }
             if (pid > 0) // Parent process, pid is child process id
@@ -230,7 +208,7 @@ bool AppInit(int argc, char* argv[])
 
             pid_t sid = setsid();
             if (sid < 0)
-                LogPrintf( "Error: setsid() returned %d errno %d\n", sid, errno);
+                fprintf(stderr, "Error: setsid() returned %d errno %d\n", sid, errno);
         }
 #endif
         SoftSetBoolArg("-server", true);

@@ -14,9 +14,9 @@ if [[ $build_xenial == true && $build_focal == true ]]; then
 fi
 
 download_and_check_macos_sdk() {
-    url="https://bitcoincore.org/depends-sources/sdks/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz"
-    output_file="Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz"
-    expected_checksum="be17f48fd0b08fb4dcd229f55a6ae48d9f781d210839b4ea313ef17dd12d6ea5"
+    url="https://download.kmd.sh/depends-sources/Xcode-13.2.1-13C100-extracted-SDK-with-libcxx-headers.tar.gz"
+    output_file="Xcode-13.2.1-13C100-extracted-SDK-with-libcxx-headers.tar.gz"
+    expected_checksum="3d200832a74bc7401160043c92f68b11fcedba2d01353b5ab204f9e6a65653d1"
 
     # Check if file exists
     if [[ -f "$output_file" ]]; then
@@ -174,6 +174,8 @@ if [[ "${build_xenial}" = "true" ]]; then
     if [[ "${delete_linux_depends}" = true ]]; then
         rm -rf ${WORKSPACE}/depends/built/x86_64-unknown-linux-gnu
         rm -rf ${WORKSPACE}/depends/x86_64-unknown-linux-gnu
+        rm -rf ${WORKSPACE}/depends/built/x86_64-pc-linux-gnu
+        rm -rf ${WORKSPACE}/depends/x86_64-pc-linux-gnu
     fi
     # delete possible artefacts from previous build(s)
     delete_artefacts xenial
@@ -191,6 +193,8 @@ if [[ "${build_focal}" = "true" ]]; then
     if [[ "${delete_linux_depends}" = true ]]; then
         rm -rf ${WORKSPACE}/depends/built/x86_64-unknown-linux-gnu
         rm -rf ${WORKSPACE}/depends/x86_64-unknown-linux-gnu
+        rm -rf ${WORKSPACE}/depends/built/x86_64-pc-linux-gnu
+        rm -rf ${WORKSPACE}/depends/x86_64-pc-linux-gnu
     fi
     # delete possible artefacts from previous build(s)
     delete_artefacts focal
