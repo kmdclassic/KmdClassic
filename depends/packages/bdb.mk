@@ -13,6 +13,7 @@ $(package)_cxxflags+=-std=c++11
 ifneq ($(build_os),darwin)
 $(package)_config_opts_darwin=--disable-atomicsupport
 endif
+$(package)_config_opts_aarch64=--disable-atomicsupport
 endef
 
 define $(package)_preprocess_cmds
@@ -22,6 +23,7 @@ define $(package)_preprocess_cmds
 endef
 
 define $(package)_config_cmds
+  cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub ../dist && \
   ../dist/$($(package)_autoconf)
 endef
 

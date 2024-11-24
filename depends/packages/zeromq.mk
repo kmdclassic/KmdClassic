@@ -35,6 +35,7 @@ define $(package)_config_cmds
 endef
 else
 define $(package)_config_cmds
+  cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub config && \
   $($(package)_autoconf)
 endef
 endif

@@ -99,6 +99,8 @@ static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 static const int MAX_SCRIPTCHECK_THREADS = 16;
 /** -par default (number of script-checking threads, 0 = auto) */
 static const int DEFAULT_SCRIPTCHECK_THREADS = 0;
+/** Maximum of loading-guts thread pool threads allowed */
+static const int MAX_LOADING_GUTS_THREADS = 4;
 /** Number of blocks that can be requested at any given time from a single peer. */
 static const int MAX_BLOCKS_IN_TRANSIT_PER_PEER = 16;
 /** Timeout in seconds during which a peer must stall block download progress before being disconnected. */
@@ -120,6 +122,7 @@ static const unsigned int MAX_REJECT_MESSAGE_LENGTH = 111;
 static const unsigned int DEFAULT_LIMITFREERELAY = 15;
 static const int64_t DEFAULT_MAX_TIP_AGE = 24 * 60 * 60;
 
+static const bool DEFAULT_TXINDEX = true;
 //static const bool DEFAULT_ADDRESSINDEX = false;
 //static const bool DEFAULT_SPENTINDEX = false;
 #define DEFAULT_ADDRESSINDEX (GetArg("-ac_cc",0) != 0 || GetArg("-ac_ccactivate",0) != 0)
