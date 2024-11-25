@@ -140,8 +140,6 @@ cd komodo
 ```
 **komodo is experimental and a work-in-progress.** Use at your own risk.
 
-*p.s.* Currently only `x86_64` arch supported for MacOS, build for `Apple M1` processors unfortunately not yet supported.
-
 #### Docker
 
 :whale: [deckersu/komodoocean](https://hub.docker.com/r/deckersu/komodoocean) - This Docker image provides the official KomodoOcean daemon for the Komodo blockchain platform. Komodod is the core component responsible for running a Komodo node, facilitating transaction validation, block creation, and communication within the network.
