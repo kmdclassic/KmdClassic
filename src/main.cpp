@@ -6120,7 +6120,7 @@ bool static LoadBlockIndexDB()
     int cur_height_num = 0;
 
     const size_t totalBlocks = vSortedByHeight.size();
-    const size_t updateInterval = totalBlocks / 100;
+    const size_t updateInterval = std::max<size_t>(totalBlocks / 100, 1);
 
     for (const std::pair<int, CBlockIndex*>& item : vSortedByHeight)
     {
