@@ -437,7 +437,7 @@ UniValue getaddressesbyaccount(const UniValue& params, bool fHelp, const CPubKey
 
     // Find all addresses that have the given account
     UniValue ret(UniValue::VARR);
-    for (const std::pair<CTxDestination, CAddressBookData>& item : pwalletMain->mapAddressBook) {
+    for (const std::pair<const CTxDestination, CAddressBookData>& item : pwalletMain->mapAddressBook) {
         const CTxDestination& dest = item.first;
         const std::string& strName = item.second.name;
         if (strName == strAccount) {
@@ -1555,7 +1555,7 @@ UniValue ListReceived(const UniValue& params, bool fByAccounts)
 
     // Tally
     std::map<CTxDestination, tallyitem> mapTally;
-    for (const std::pair<uint256, CWalletTx>& pairWtx : pwalletMain->mapWallet) {
+    for (const std::pair<const uint256, CWalletTx>& pairWtx : pwalletMain->mapWallet) {
         const CWalletTx& wtx = pairWtx.second;
 
         if (wtx.IsCoinBase() || !CheckFinalTx(wtx))
@@ -1595,7 +1595,7 @@ UniValue ListReceived(const UniValue& params, bool fByAccounts)
     // Reply
     UniValue ret(UniValue::VARR);
     std::map<std::string, tallyitem> mapAccountTally;
-    for (const std::pair<CTxDestination, CAddressBookData>& item : pwalletMain->mapAddressBook) {
+    for (const std::pair<const CTxDestination, CAddressBookData>& item : pwalletMain->mapAddressBook) {
         const CTxDestination& dest = item.first;
         const std::string& strAccount = item.second.name;
         std::map<CTxDestination, tallyitem>::iterator it = mapTally.find(dest);
