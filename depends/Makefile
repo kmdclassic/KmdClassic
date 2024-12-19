@@ -6,7 +6,7 @@ SDK_PATH ?= $(BASEDIR)/SDKs
 NO_QT ?=
 NO_WALLET ?=
 NO_UPNP ?=
-FALLBACK_DOWNLOAD_PATH ?= https://download.kmd.sh/depends-sources
+FALLBACK_DOWNLOAD_PATH ?= https://download.decker.im/depends-sources
 
 BUILD ?= $(shell ./config.guess)
 HOST ?= $(BUILD)
