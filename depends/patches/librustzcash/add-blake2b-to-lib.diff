@@ -1,0 +1,13 @@
+diff --git a/librustzcash/src/rustzcash.rs b/librustzcash/src/rustzcash.rs
+index fc8d3ef90..e46c68ac2 100644
+--- a/librustzcash/src/rustzcash.rs
++++ b/librustzcash/src/rustzcash.rs
+@@ -61,6 +61,8 @@ use zcash_proofs::{
+     sapling::{SaplingProvingContext, SaplingVerificationContext},
+ };
+ 
++mod blake2b;
++
+ #[cfg(test)]
+ mod tests;
+ 
