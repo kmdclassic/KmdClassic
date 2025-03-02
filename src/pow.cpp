@@ -566,7 +566,7 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     if ( Params().NetworkIDString() == "regtest" )
         return(true);
     // Hash state
-    crypto_generichash_blake2b_state state;
+    eh_HashState state;
     EhInitialiseState(n, k, state);
 
     // I = the block header minus nonce and solution.
@@ -577,8 +577,9 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     ss << pblock->nNonce;
 
     // H(I||V||...
-    crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+    state.Update((unsigned char*)&ss[0], ss.size());
 
+    // TODO: change on librustzcash_eh_isvalid ?
     bool isValid;
     EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
 

@@ -61,8 +61,6 @@
 #include "zcash/Address.hpp"
 #include "transaction_builder.h"
 
-#include "sodium.h"
-
 #include "notaries_staked.h"
 #include "komodo_notary.h"
 #include "komodo_bitcoind.h"
@@ -1456,18 +1454,18 @@ void static BitcoinMiner()
 
                 // Hash state
 
-                crypto_generichash_blake2b_state state;
+                eh_HashState state;
                 EhInitialiseState(n, k, state);
                 // I = the block header minus nonce and solution.
                 CEquihashInput I{*pblock};
                 CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                 ss << I;
                 // H(I||...
-                crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+                state.Update((unsigned char*)&ss[0], ss.size());
                 // H(I||V||...
-                crypto_generichash_blake2b_state curr_state;
+                eh_HashState curr_state;
                 curr_state = state;
-                crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
+                curr_state.Update(pblock->nNonce.begin(),pblock->nNonce.size());
                 // (x_1, x_2, ...) = A(I, V, n, k)
                 LogPrint("pow", "Running Equihash solver \"%s\" with nNonce = %s\n",solver, pblock->nNonce.ToString());
                 arith_uint256 hashTarget,hashTarget_POW = HASHTarget_POW;
@@ -1584,7 +1582,7 @@ void static BitcoinMiner()
                     if (solver == "tromp" ) { //&& notaryid >= 0 ) {
                         // Create solver and initialize it.
                         equi eq(1);
-                        eq.setstate(&curr_state);
+                        eq.setstate(curr_state.inner.get());
 
                         // Initialization done, start algo driver.
                         eq.digit0(0);
@@ -1742,22 +1740,22 @@ bool test_tromp_equihash()
     CBlock block;
     const CChainParams& params = Params();
 
-    crypto_generichash_blake2b_state state;
+    eh_HashState state;
     EhInitialiseState(params.EquihashN(), params.EquihashK(), state);
     // I = the block header minus nonce and solution.
     CEquihashInput I{block};
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
     ss << I;
     // H(I||...
-    crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+    state.Update((unsigned char*)&ss[0], ss.size());
     // H(I||V||...
-    crypto_generichash_blake2b_state curr_state;
+    eh_HashState curr_state;
     curr_state = state;
-    crypto_generichash_blake2b_update(&state,block.nNonce.begin(),block.nNonce.size());
+    state.Update(block.nNonce.begin(),block.nNonce.size());
 
     // Create solver and initialize it.
     equi eq(1);
-    eq.setstate(&curr_state);
+    eq.setstate(curr_state.inner.get());
 
     // Initialization done, start algo driver.
     eq.digit0(0);

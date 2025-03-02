@@ -196,7 +196,7 @@ bool CalcPoW(CBlock *pblock)
     unsigned int n = Params().EquihashN();
     unsigned int k = Params().EquihashK();
     // Hash state
-    crypto_generichash_blake2b_state eh_state;
+    eh_HashState eh_state;
     EhInitialiseState(n, k, eh_state);
 
     // I = the block header minus nonce and solution.
@@ -205,7 +205,7 @@ bool CalcPoW(CBlock *pblock)
     ss << I;
 
     // H(I||...
-    crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
+    eh_state.Update((unsigned char*)&ss[0], ss.size());
 
     while (true) {
         // Yes, there is a chance every nonce could fail to satisfy the -regtest
@@ -213,11 +213,8 @@ bool CalcPoW(CBlock *pblock)
         pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
 
         // H(I||V||...
-        crypto_generichash_blake2b_state curr_state;
-        curr_state = eh_state;
-        crypto_generichash_blake2b_update(&curr_state,
-                                            pblock->nNonce.begin(),
-                                            pblock->nNonce.size());
+        eh_HashState curr_state(eh_state);
+        curr_state.Update(pblock->nNonce.begin(), pblock->nNonce.size());
 
         // (x_1, x_2, ...) = A(I, V, n, k)
         std::function<bool(std::vector<unsigned char>)> validBlock =

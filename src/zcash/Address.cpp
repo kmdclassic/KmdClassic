@@ -5,8 +5,9 @@
 #include "streams.h"
 
 #include <librustzcash.h>
+#include <rust/blake2b.h>
 
-const unsigned char ZCASH_SAPLING_FVFP_PERSONALIZATION[crypto_generichash_blake2b_PERSONALBYTES] =
+const unsigned char ZCASH_SAPLING_FVFP_PERSONALIZATION[BLAKE2bPersonalBytes] =
     {'Z', 'c', 'a', 's', 'h', 'S', 'a', 'p', 'l', 'i', 'n', 'g', 'F', 'V', 'F', 'P'};
 
 const uint32_t SAPLING_BRANCH_ID = 0x76b809bb;
