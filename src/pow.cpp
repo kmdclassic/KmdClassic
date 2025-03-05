@@ -579,7 +579,7 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     // H(I||V||...
     state.Update((unsigned char*)&ss[0], ss.size());
 
-    // TODO: change on librustzcash_eh_isvalid ?
+    // TODO: use Rust Equihash validator (librustzcash_eh_isvalid) ?
     bool isValid;
     EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
 
