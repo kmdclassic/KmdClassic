@@ -574,12 +574,22 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     // I||V
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
     ss << I;
+
+    // TODO: use Rust Equihash validator (librustzcash_eh_isvalid)
+    // https://github.com/zcash/zcash/pull/4448, https://github.com/zcash/zcash/pull/4608
+    /*
+    return librustzcash_eh_isvalid(
+        n, k,
+        (unsigned char*)&ss[0], ss.size(),
+        pblock->nNonce.begin(), pblock->nNonce.size(),
+        pblock->nSolution.data(), pblock->nSolution.size());
+    */
+
     ss << pblock->nNonce;
 
     // H(I||V||...
     state.Update((unsigned char*)&ss[0], ss.size());
 
-    // TODO: use Rust Equihash validator (librustzcash_eh_isvalid) ?
     bool isValid;
     EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
 
