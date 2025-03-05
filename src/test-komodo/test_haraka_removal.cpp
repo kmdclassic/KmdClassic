@@ -51,6 +51,7 @@ namespace TestHarakaRemoval {
         chainActive.SetTip(&fakeIndex);
         EXPECT_TRUE(chainActive.Contains(&fakeIndex));
         EXPECT_EQ(0, chainActive.Height());
+        SelectParams(CBaseChainParams::REGTEST);
 
         /*
         CDiskBlockIndex diskindex {&fakeIndex};

@@ -26,7 +26,8 @@ komodo_test_SOURCES = \
     test-komodo/test_parse_args.cpp \
     test-komodo/test-gmp-arith.cpp \
     test-komodo/test_equihash.cpp \
-    test-komodo/test_equihash_boost.cpp
+    test-komodo/test_equihash_boost.cpp \
+    test-komodo/test_equihash_solution.cpp
 
 if TARGET_WINDOWS
 komodo_test_SOURCES += test-komodo/komodo-test-res.rc
