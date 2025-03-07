@@ -43,6 +43,9 @@ jobs:
       - name: Build app in docker container
         uses: ./.github/actions/build-project-docker
         id: build-in-docker
+        env:
+          DOCKER_CLIENT_TIMEOUT: 120
+          COMPOSE_HTTP_TIMEOUT: 120
         with:
           builder-name: '${{ steps.set_variables_step.outputs.builder_name }}'
           builder-uid: '${{ steps.set_variables_step.outputs.builder_uid }}'
