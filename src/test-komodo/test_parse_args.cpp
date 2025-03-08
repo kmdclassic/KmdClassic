@@ -72,15 +72,17 @@ namespace ParseArgumentsTests {
 
         private:
             boost::filesystem::path pathDataDir;
+            uint32_t oldASSETCHAINS_MAGIC;
             void printMessage(const std::string &message) {
                 std::cout << "[          ] " << message;
             }
             void ClearKomodoGlobals() {
                 mapArgs.clear();
                 mapMultiArgs.clear();
+                ASSETCHAINS_MAGIC = oldASSETCHAINS_MAGIC;
             }
         public:
-            ParseArgumentsTests() : pathDataDir("") {}
+            ParseArgumentsTests() : pathDataDir(""), oldASSETCHAINS_MAGIC(ASSETCHAINS_MAGIC) {}
 
             std::ostream& LogMessage() {
                 std::cout << "[          ] ";
