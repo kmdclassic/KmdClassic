@@ -213,7 +213,13 @@ namespace LegacyEventsTests {
                 fPrintToConsole = false;
 
                 if (!pathDataDir.empty()) {
-                    fs::remove_all(pathDataDir);
+                    komodo_statefile_uninit();
+                    try {
+                        fs::remove_all(pathDataDir);
+                    } catch (const fs::filesystem_error &e) {
+                        std::cerr << "Error removing directory " << pathDataDir.string()
+                                  << ": " << e.what() << std::endl;
+                    }
                 }
 
                 mapArgs.erase("-datadir");
