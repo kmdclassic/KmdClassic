@@ -13,6 +13,7 @@
 #include "script/interpreter.h"
 #include "script/serverchecker.h"
 #include "txmempool.h"
+#include "txdb.h"
 
 #include "testutils.h"
 
@@ -23,6 +24,7 @@ namespace TestCoinImport {
 
 
 static uint8_t testNum = 0;
+static bool fOldTxIndex;
 
 class TestCoinImport : public ::testing::Test, public Eval {
 public:
@@ -54,7 +56,21 @@ public:
 
 
 protected:
-    static void SetUpTestCase() { setupChain(); }
+    // Called once before any test in this suite.
+    static void SetUpTestCase()
+    {
+        fOldTxIndex = fTxIndex;
+        setupChain();
+    }
+    // Called once after all tests in this suite.
+    static void TearDownTestCase()
+    {
+        fTxIndex = fOldTxIndex;
+        // TODO: deleteIfUsedBefore(pnotarisations);
+        deleteIfUsedBefore(pcoinsTip);
+        // TODO: deleteIfUsedBefore(pcoinsdbview);
+        deleteIfUsedBefore(pblocktree);
+    }
     virtual void SetUp() {
         ASSETCHAINS_CC = 1;
         EVAL_TEST = this;
