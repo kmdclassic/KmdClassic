@@ -5,6 +5,7 @@
 #include "komodo_utils.h"
 #include "komodo_hardfork.h"
 #include "txdb.h"
+#include "testutils.h"
 
 #include <iostream>
 #include <vector>
@@ -138,15 +139,6 @@ namespace GMPArithTests
         mtx.vout.push_back(CTxOut(300000000, CScript() << ParseHex("031111111111111111111111111111111111111111111111111111111111111111") << OP_CHECKSIG));
         CTransaction tx(mtx);
         return tx;
-    }
-
-    // Helper function to delete and set to nullptr if not nullptr
-    template<typename T>
-    void deleteIfUsedBefore(T*& ptr) {
-        if (ptr != nullptr) {
-            delete ptr;
-            ptr = nullptr;
-        }
     }
 
     TEST(GMPArithTests, RewardsTest)
