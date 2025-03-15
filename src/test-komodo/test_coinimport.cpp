@@ -25,6 +25,7 @@ namespace TestCoinImport {
 
 static uint8_t testNum = 0;
 static bool fOldTxIndex;
+static uint32_t oldASSETCHAINS_CC;
 
 class TestCoinImport : public ::testing::Test, public Eval {
 public:
@@ -59,12 +60,14 @@ protected:
     // Called once before any test in this suite.
     static void SetUpTestCase()
     {
+        oldASSETCHAINS_CC = ASSETCHAINS_CC;
         fOldTxIndex = fTxIndex;
         setupChain();
     }
     // Called once after all tests in this suite.
     static void TearDownTestCase()
     {
+        ASSETCHAINS_CC = oldASSETCHAINS_CC;
         fTxIndex = fOldTxIndex;
         // TODO: deleteIfUsedBefore(pnotarisations);
         deleteIfUsedBefore(pcoinsTip);

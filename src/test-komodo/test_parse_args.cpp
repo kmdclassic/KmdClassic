@@ -73,6 +73,8 @@ namespace ParseArgumentsTests {
         private:
             boost::filesystem::path pathDataDir;
             uint32_t oldASSETCHAINS_MAGIC;
+            uint32_t oldASSETCHAINS_CC;
+            uint64_t oldASSETCHAINS_COMMISSION;
             void printMessage(const std::string &message) {
                 std::cout << "[          ] " << message;
             }
@@ -80,10 +82,12 @@ namespace ParseArgumentsTests {
                 mapArgs.clear();
                 mapMultiArgs.clear();
                 ASSETCHAINS_MAGIC = oldASSETCHAINS_MAGIC;
+                ASSETCHAINS_CC = oldASSETCHAINS_CC;
                 memset(ASSETCHAINS_CCDISABLES, 0, sizeof(ASSETCHAINS_CCDISABLES));
+                ASSETCHAINS_COMMISSION = oldASSETCHAINS_COMMISSION;
             }
         public:
-            ParseArgumentsTests() : pathDataDir(""), oldASSETCHAINS_MAGIC(ASSETCHAINS_MAGIC) {}
+            ParseArgumentsTests() : pathDataDir(""), oldASSETCHAINS_MAGIC(ASSETCHAINS_MAGIC), oldASSETCHAINS_CC(ASSETCHAINS_CC), oldASSETCHAINS_COMMISSION(ASSETCHAINS_COMMISSION) {}
 
             std::ostream& LogMessage() {
                 std::cout << "[          ] ";
