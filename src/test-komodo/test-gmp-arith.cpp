@@ -143,6 +143,8 @@ namespace GMPArithTests
 
     TEST(GMPArithTests, RewardsTest)
     {
+        std::string oldNetworkIdStr = Params().NetworkIDString();
+        SelectParams(CBaseChainParams::REGTEST);
 
         bool fTxIndexOld = fTxIndex;
         bool fPrintToConsoleOld = fPrintToConsole;
@@ -312,6 +314,8 @@ namespace GMPArithTests
         fPrintToConsole = fPrintToConsoleOld;
         chainName = assetchainOld; // restore saved values
         fTxIndex = fTxIndexOld;
+
+        SelectParams(GetNetworkByIdStr(oldNetworkIdStr));
 
         if (fRewardTestFailure) {
             FAIL() << RewardTestErrorMessage;
