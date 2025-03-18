@@ -171,3 +171,13 @@ namespace testing
 TestCout::~TestCout() {
     PRINTF("%s", str().c_str());
 }
+
+CBaseChainParams::Network GetNetworkByIdStr(const std::string& networkIdStr) {
+    static const std::unordered_map<std::string, CBaseChainParams::Network> networkMap{
+        {"main", CBaseChainParams::MAIN},
+        {"test", CBaseChainParams::TESTNET},
+        {"regtest", CBaseChainParams::REGTEST}
+    };
+    auto it = networkMap.find(networkIdStr);
+    return (it != networkMap.end() ? it->second : CBaseChainParams::REGTEST); // if not found return REGTEST
+}

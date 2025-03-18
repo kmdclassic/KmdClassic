@@ -42,4 +42,5 @@ class TestCout : public std::stringstream {
 
 #define GTEST_COUT_COLOR TestCout()
 #define GTEST_COUT_NOCOLOR std::cerr << "[          ] [ INFO ] "
+CBaseChainParams::Network GetNetworkByIdStr(const std::string& networkIdStr);
 #endif /* TESTUTILS_H */
