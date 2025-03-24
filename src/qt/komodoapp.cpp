@@ -378,12 +378,9 @@ void KomodoCore::shutdown()
             }
             fShutdown = ShutdownRequested();
         }
-        if (&threadGroup)
-        {
-            Interrupt(threadGroup);
-            threadGroup.join_all();
-        }
 
+        Interrupt(threadGroup);
+        threadGroup.join_all();
         Shutdown();
 
         qDebug() << __func__ << ": Shutdown finished";
