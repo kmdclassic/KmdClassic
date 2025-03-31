@@ -1935,18 +1935,12 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
                     {
                         if (pfMissingInputs)
                             *pfMissingInputs = true;
-                        //LogPrintf("missing inputs\n");
-                        return false; 
-                        /*
-                            https://github.com/zcash/zcash/blob/master/src/main.cpp#L1490
-                            state.DoS(0, error("AcceptToMemoryPool: tx inputs not found"),REJECT_INVALID, "bad-txns-inputs-missing");
-                        */
+                        return false; // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
                     }
                 }
                 // are the actual inputs available?
                 if (!view.HaveInputs(tx))
                 {
-                    //LogPrintf("accept failure.1\n");
                     return state.Invalid(error("AcceptToMemoryPool: inputs already spent"),REJECT_DUPLICATE, "bad-txns-inputs-spent");
                 }
             }
