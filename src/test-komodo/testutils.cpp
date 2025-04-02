@@ -145,3 +145,39 @@ void getInputTx(CScript scriptPubKey, CTransaction &txIn)
     acceptTxFail(mtx);
     txIn = CTransaction(mtx);
 }
+
+// https://stackoverflow.com/questions/16491675/how-to-send-custom-message-in-google-c-testing-framework/29155677
+/*
+namespace testing
+{
+    namespace internal
+    {
+    enum GTestColor {
+        COLOR_DEFAULT,
+        COLOR_RED,
+        COLOR_GREEN,
+        COLOR_YELLOW
+    };
+
+    extern void ColoredPrintf(GTestColor color, const char* fmt, ...);
+    }
+}
+#define PRINTF(...)  do { testing::internal::ColoredPrintf(testing::internal::COLOR_GREEN, "[          ] "); testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__); } while(0)
+*/
+
+// https://stackoverflow.com/questions/63464085/coloredprintf-in-recent-googletest
+#define PRINTF(...)  do { std::cerr << "[          ] "; std::cerr << strprintf(__VA_ARGS__); } while(0)
+
+TestCout::~TestCout() {
+    PRINTF("%s", str().c_str());
+}
+
+CBaseChainParams::Network GetNetworkByIdStr(const std::string& networkIdStr) {
+    static const std::unordered_map<std::string, CBaseChainParams::Network> networkMap{
+        {"main", CBaseChainParams::MAIN},
+        {"test", CBaseChainParams::TESTNET},
+        {"regtest", CBaseChainParams::REGTEST}
+    };
+    auto it = networkMap.find(networkIdStr);
+    return (it != networkMap.end() ? it->second : CBaseChainParams::REGTEST); // if not found return REGTEST
+}

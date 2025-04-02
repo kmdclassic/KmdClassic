@@ -10,6 +10,7 @@ int main(int argc, char **argv) {
     assert(init_and_check_sodium() != -1);
     ECC_Start();
     ECCVerifyHandle handle;  // Inits secp256k1 verify context
+    SetupEnvironment();
     SetupNetworking(); // for tests running on the Win64 platform, Windows sockets must be initialized.
     SelectParams(CBaseChainParams::REGTEST);
 

@@ -566,7 +566,7 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     if ( Params().NetworkIDString() == "regtest" )
         return(true);
     // Hash state
-    crypto_generichash_blake2b_state state;
+    eh_HashState state;
     EhInitialiseState(n, k, state);
 
     // I = the block header minus nonce and solution.
@@ -574,10 +574,21 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     // I||V
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
     ss << I;
+
+    // TODO: use Rust Equihash validator (librustzcash_eh_isvalid)
+    // https://github.com/zcash/zcash/pull/4448, https://github.com/zcash/zcash/pull/4608
+    /*
+    return librustzcash_eh_isvalid(
+        n, k,
+        (unsigned char*)&ss[0], ss.size(),
+        pblock->nNonce.begin(), pblock->nNonce.size(),
+        pblock->nSolution.data(), pblock->nSolution.size());
+    */
+
     ss << pblock->nNonce;
 
     // H(I||V||...
-    crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+    state.Update((unsigned char*)&ss[0], ss.size());
 
     bool isValid;
     EhIsValidSolution(n, k, state, pblock->nSolution, isValid);

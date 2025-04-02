@@ -13,8 +13,6 @@
 #include "test/test_bitcoin.h"
 #include "uint256.h"
 
-#include "sodium.h"
-
 #include <sstream>
 #include <set>
 #include <vector>
@@ -47,12 +45,12 @@ void PrintSolutions(std::stringstream &strm, std::set<std::vector<uint32_t>> sol
 #ifdef ENABLE_MINING
 void TestEquihashSolvers(unsigned int n, unsigned int k, const std::string &I, const arith_uint256 &nonce, const std::set<std::vector<uint32_t>> &solns) {
     size_t cBitLen { n/(k+1) };
-    crypto_generichash_blake2b_state state;
+    eh_HashState state;
     EhInitialiseState(n, k, state);
     uint256 V = ArithToUint256(nonce);
     BOOST_TEST_MESSAGE("Running solver: n = " << n << ", k = " << k << ", I = " << I << ", V = " << V.GetHex());
-    crypto_generichash_blake2b_update(&state, (unsigned char*)&I[0], I.size());
-    crypto_generichash_blake2b_update(&state, V.begin(), V.size());
+    state.Update((unsigned char*)&I[0], I.size());
+    state.Update(V.begin(), V.size());
 
     // First test the basic solver
     std::set<std::vector<uint32_t>> ret;
@@ -87,11 +85,11 @@ void TestEquihashSolvers(unsigned int n, unsigned int k, const std::string &I, c
 
 void TestEquihashValidator(unsigned int n, unsigned int k, const std::string &I, const arith_uint256 &nonce, std::vector<uint32_t> soln, bool expected) {
     size_t cBitLen { n/(k+1) };
-    crypto_generichash_blake2b_state state;
+    eh_HashState state;
     EhInitialiseState(n, k, state);
     uint256 V = ArithToUint256(nonce);
-    crypto_generichash_blake2b_update(&state, (unsigned char*)&I[0], I.size());
-    crypto_generichash_blake2b_update(&state, V.begin(), V.size());
+    state.Update((unsigned char*)&I[0], I.size());
+    state.Update(V.begin(), V.size());
     BOOST_TEST_MESSAGE("Running validator: n = " << n << ", k = " << k << ", I = " << I << ", V = " << V.GetHex() << ", expected = " << expected << ", soln =");
     std::stringstream strm;
     PrintSolution(strm, soln);

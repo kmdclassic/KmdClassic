@@ -56,6 +56,17 @@
 #include "compat/endian.h"
 #endif
 */
+
+void eh_HashState::Update(const unsigned char *input, size_t inputLen)
+{
+    blake2b_update(inner.get(), input, inputLen);
+}
+
+void eh_HashState::Finalize(unsigned char *hash, size_t hLen)
+{
+    blake2b_finalize(inner.get(), hash, hLen);
+}
+
 static EhSolverCancelledException solver_cancelled;
 
 int8_t ZeroizeUnusedBits(size_t N, unsigned char* hash, size_t hLen)
@@ -76,26 +87,29 @@ int8_t ZeroizeUnusedBits(size_t N, unsigned char* hash, size_t hLen)
 
 
 template<unsigned int N, unsigned int K>
-int Equihash<N,K>::InitialiseState(eh_HashState& base_state)
+void Equihash<N,K>::InitialiseState(eh_HashState& base_state)
 {
     uint32_t le_N = htole32(N);
     uint32_t le_K = htole32(K);
-    unsigned char personalization[crypto_generichash_blake2b_PERSONALBYTES] = {};
+    unsigned char personalization[BLAKE2bPersonalBytes] = {};
     if ( ASSETCHAINS_NK[0] == 0 && ASSETCHAINS_NK[1] == 0 )
         memcpy(personalization, "ZcashPoW", 8);
-    else 
+    else
         memcpy(personalization, "NandKPoW", 8);
     memcpy(personalization+8,  &le_N, 4);
     memcpy(personalization+12, &le_K, 4);
 
-    const uint8_t outlen = (512 / N) * GetSizeInBytes(N);
+    // TODO:
+    // Is blackjok3r's commit with "add ac_nk params" was correct?
+    // https://github.com/KomodoPlatform/komodo/commit/18854e2af787893dfd5b82284c960220a03bf3e7
+    // GetSizeInBytes(N) = N/8 -> GetSizeInBytes(N) = (N + 7) / 8 - different results for
+    // N is not a multiple of 8, for example for N == 15 (68 in bj's variant, and 63 in original)
+    // Maybe ZeroizeUnusedBits is also not needed (?)
+
+    const uint8_t outlen = (512 / N) * GetSizeInBytes(N); // (512/N)*N/8 ?
 
     BOOST_STATIC_ASSERT(!((!outlen) || (outlen > BLAKE2B_OUTBYTES)));
-    return crypto_generichash_blake2b_init_salt_personal(&base_state,
-                                                         NULL, 0, // No key.
-                                                         outlen,
-                                                         NULL,    // No salt.
-                                                         personalization);
+    base_state = eh_HashState(outlen, personalization);
 }
 
 void GenerateHash(const eh_HashState& base_state, eh_index g,
@@ -103,30 +117,25 @@ void GenerateHash(const eh_HashState& base_state, eh_index g,
 {
     if ( ASSETCHAINS_NK[0] == 0 && ASSETCHAINS_NK[1] == 0 )
     {
-        eh_HashState state;
-        state = base_state;
+        eh_HashState state(base_state);
         eh_index lei = htole32(g);
-        crypto_generichash_blake2b_update(&state, (const unsigned char*) &lei,
-                                          sizeof(eh_index));
-        crypto_generichash_blake2b_final(&state, hash, hLen);
+        state.Update((const unsigned char*) &lei, sizeof(eh_index));
+        state.Finalize(hash, hLen);
     }
-    else 
+    else
     {
         uint32_t myHash[16] = {0};
         uint32_t startIndex = g & 0xFFFFFFF0;
 
         for (uint32_t g2 = startIndex; g2 <= g; g2++) {
-    	    uint32_t tmpHash[16] = {0};
-    	 
-    	    eh_HashState state;	
-    	    state = base_state;
-    	    eh_index lei = htole32(g2);
-    	    crypto_generichash_blake2b_update(&state, (const unsigned char*) &lei,
-    		                              sizeof(eh_index));
-    	    
-    	    crypto_generichash_blake2b_final(&state, (unsigned char*)&tmpHash[0], static_cast<uint8_t>(hLen));
+            uint32_t tmpHash[16] = {0};
 
-    	    for (uint32_t idx = 0; idx < 16; idx++) myHash[idx] += tmpHash[idx];
+            eh_HashState state(base_state);
+            eh_index lei = htole32(g2);
+            state.Update((const unsigned char*) &lei, sizeof(eh_index));
+            state.Finalize((unsigned char*)&tmpHash[0], static_cast<uint8_t>(hLen));
+
+            for (uint32_t idx = 0; idx < 16; idx++) myHash[idx] += tmpHash[idx];
         }
 
         memcpy(hash, &myHash[0], hLen);
@@ -854,7 +863,7 @@ bool Equihash<N,K>::IsValidSolution(const eh_HashState& base_state, std::vector<
 }
 
 // Explicit instantiations for Equihash<200,9>
-template int Equihash<200,9>::InitialiseState(eh_HashState& base_state);
+template void Equihash<200,9>::InitialiseState(eh_HashState& base_state);
 #ifdef ENABLE_MINING
 template bool Equihash<200,9>::BasicSolve(const eh_HashState& base_state,
                                           const std::function<bool(const std::vector<unsigned char>&)> validBlock,
@@ -864,9 +873,9 @@ template bool Equihash<200,9>::OptimisedSolve(const eh_HashState& base_state,
                                               const std::function<bool(EhSolverCancelCheck)> cancelled);
 #endif
 template bool Equihash<200,9>::IsValidSolution(const eh_HashState& base_state, std::vector<unsigned char> soln);
-                                              
+
 // Explicit instantiations for Equihash<96,3>
-template int Equihash<150,5>::InitialiseState(eh_HashState& base_state);
+template void Equihash<150,5>::InitialiseState(eh_HashState& base_state);
 #ifdef ENABLE_MINING
 template bool Equihash<150,5>::BasicSolve(const eh_HashState& base_state,
                                          const std::function<bool(const std::vector<unsigned char>&)> validBlock,
@@ -878,7 +887,7 @@ template bool Equihash<150,5>::OptimisedSolve(const eh_HashState& base_state,
 template bool Equihash<150,5>::IsValidSolution(const eh_HashState& base_state, std::vector<unsigned char> soln);
 
 // Explicit instantiations for Equihash<48,5>
-template int Equihash<144,5>::InitialiseState(eh_HashState& base_state);
+template void Equihash<144,5>::InitialiseState(eh_HashState& base_state);
 #ifdef ENABLE_MINING
 template bool Equihash<144,5>::BasicSolve(const eh_HashState& base_state,
                                          const std::function<bool(const std::vector<unsigned char>&)> validBlock,
@@ -890,7 +899,7 @@ template bool Equihash<144,5>::OptimisedSolve(const eh_HashState& base_state,
 template bool Equihash<144,5>::IsValidSolution(const eh_HashState& base_state, std::vector<unsigned char> soln);
 
 // Explicit instantiations for Equihash<96,5>
-template int Equihash<ASSETCHAINS_N,ASSETCHAINS_K>::InitialiseState(eh_HashState& base_state);
+template void Equihash<ASSETCHAINS_N,ASSETCHAINS_K>::InitialiseState(eh_HashState& base_state);
 #ifdef ENABLE_MINING
 template bool Equihash<ASSETCHAINS_N,ASSETCHAINS_K>::BasicSolve(const eh_HashState& base_state,
                                          const std::function<bool(const std::vector<unsigned char>&)> validBlock,
@@ -902,7 +911,7 @@ template bool Equihash<ASSETCHAINS_N,ASSETCHAINS_K>::OptimisedSolve(const eh_Has
 template bool Equihash<ASSETCHAINS_N,ASSETCHAINS_K>::IsValidSolution(const eh_HashState& base_state, std::vector<unsigned char> soln);
 
 // Explicit instantiations for Equihash<96,5>
-template int Equihash<48,5>::InitialiseState(eh_HashState& base_state);
+template void Equihash<48,5>::InitialiseState(eh_HashState& base_state);
 #ifdef ENABLE_MINING
 template bool Equihash<48,5>::BasicSolve(const eh_HashState& base_state,
                                          const std::function<bool(const std::vector<unsigned char>&)> validBlock,
@@ -914,7 +923,7 @@ template bool Equihash<48,5>::OptimisedSolve(const eh_HashState& base_state,
 template bool Equihash<48,5>::IsValidSolution(const eh_HashState& base_state, std::vector<unsigned char> soln);
 
 // Explicit instantiations for Equihash<48,5>
-template int Equihash<210,9>::InitialiseState(eh_HashState& base_state);
+template void Equihash<210,9>::InitialiseState(eh_HashState& base_state);
 #ifdef ENABLE_MINING
 template bool Equihash<210,9>::BasicSolve(const eh_HashState& base_state,
                                          const std::function<bool(const std::vector<unsigned char>&)> validBlock,

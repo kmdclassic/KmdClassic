@@ -94,7 +94,7 @@ public:
         cachedAddressTable.clear();
         {
             LOCK(wallet->cs_wallet);
-            for (const std::pair<libzcash::PaymentAddress, CAddressBookData>& item : wallet->mapZAddressBook)
+            for (const std::pair<const libzcash::PaymentAddress, CAddressBookData>& item : wallet->mapZAddressBook)
             {
                 const libzcash::PaymentAddress& address = item.first;
 //                bool fMine = wallet->HaveSpendingKey(address) | wallet->HaveViewingKey(address);

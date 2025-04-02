@@ -20,7 +20,6 @@
 #include "pow.h"
 #include "rpc/server.h"
 #include "script/sign.h"
-#include "sodium.h"
 #include "streams.h"
 #include "txdb.h"
 #include "utiltest.h"
@@ -159,15 +158,13 @@ double benchmark_solve_equihash()
 
     unsigned int n = Params(CBaseChainParams::MAIN).EquihashN();
     unsigned int k = Params(CBaseChainParams::MAIN).EquihashK();
-    crypto_generichash_blake2b_state eh_state;
+    eh_HashState eh_state;
     EhInitialiseState(n, k, eh_state);
-    crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
+    eh_state.Update((unsigned char*)&ss[0], ss.size());
 
     uint256 nonce;
     randombytes_buf(nonce.begin(), 32);
-    crypto_generichash_blake2b_update(&eh_state,
-                                    nonce.begin(),
-                                    nonce.size());
+    eh_state.Update(nonce.begin(), nonce.size());
 
     struct timeval tv_start;
     timer_start(tv_start);
@@ -528,6 +525,10 @@ double benchmark_create_sapling_output()
     auto enc = res.get();
     auto encryptor = enc.second;
 
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss << address;
+    std::vector<unsigned char> addressBytes(ss.begin(), ss.end());
+
     auto ctx = librustzcash_sapling_proving_ctx_init();
 
     struct timeval tv_start;
@@ -537,8 +538,7 @@ double benchmark_create_sapling_output()
     bool result = librustzcash_sapling_output_proof(
         ctx,
         encryptor.get_esk().begin(),
-        note.d.data(),
-        note.pk_d.begin(),
+        addressBytes.data(),
         note.r.begin(),
         note.value(),
         odesc.cv.begin(),

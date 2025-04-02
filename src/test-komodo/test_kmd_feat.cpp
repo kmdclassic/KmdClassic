@@ -115,6 +115,7 @@ protected:
         UpdateNetworkUpgradeParameters(Consensus::UPGRADE_SAPLING, Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT);
         UpdateNetworkUpgradeParameters(Consensus::UPGRADE_OVERWINTER, Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT);
         fPrintToConsole = fPrintToConsoleOld;
+        SelectParams(CBaseChainParams::REGTEST);
     }
     bool fPrintToConsoleOld;
 };
