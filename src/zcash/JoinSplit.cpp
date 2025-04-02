@@ -1,6 +1,5 @@
 #include "JoinSplit.hpp"
 #include "prf.h"
-#include "sodium.h"
 
 #include "zcash/util.h"
 
@@ -16,6 +15,7 @@
 extern int64_t MAX_MONEY;
 
 #include "librustzcash.h"
+#include <rust/blake2b.h>
 #include "streams.h"
 #include "version.h"
 
@@ -221,7 +221,7 @@ uint256 JoinSplit<NumInputs, NumOutputs>::h_sig(
     const std::array<uint256, NumInputs>& nullifiers,
     const uint256& joinSplitPubKey
 ) {
-    const unsigned char personalization[crypto_generichash_blake2b_PERSONALBYTES]
+    const unsigned char personalization[BLAKE2bPersonalBytes]
         = {'Z','c','a','s','h','C','o','m','p','u','t','e','h','S','i','g'};
 
     std::vector<unsigned char> block(randomSeed.begin(), randomSeed.end());
@@ -234,15 +234,10 @@ uint256 JoinSplit<NumInputs, NumOutputs>::h_sig(
 
     uint256 output;
 
-    if (crypto_generichash_blake2b_salt_personal(output.begin(), 32,
-                                                 &block[0], block.size(),
-                                                 NULL, 0, // No key.
-                                                 NULL,    // No salt.
-                                                 personalization
-                                                ) != 0)
-    {
-        throw std::logic_error("hash function failure");
-    }
+    auto state = blake2b_init(32, personalization);
+    blake2b_update(state, &block[0], block.size());
+    blake2b_finalize(state, output.begin(), 32);
+    blake2b_free(state);
 
     return output;
 }
