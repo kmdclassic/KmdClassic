@@ -18,6 +18,7 @@ ARG BUILDER_GID=1000
 ENV TZ=Europe/Amsterdam
 
 RUN \
+    id -u 102 &>/dev/null && usermod -u 105 $(getent passwd 102 | cut -d: -f1) || true; \
     apt-get update && apt-get install --no-install-recommends -y apt-transport-https ca-certificates curl &&\
     sed -i 's/archive\.ubuntu\.com/mirror\.nl\.leaseweb\.net/g' /etc/apt/sources.list &&\
     sed -i 's/security\.ubuntu\.com/mirror\.nl\.leaseweb\.net/g' /etc/apt/sources.list &&\
