@@ -16,7 +16,7 @@ if git diff --quiet "$BDB_FILE"; then
     read -p "Do you want to proceed with the upgrade? (yes/no): " user_response
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        SED_INPLACE="sed -i ''"
+        SED_INPLACE="sed -i .bak"
     else
         SED_INPLACE="sed -i"
     fi
@@ -33,9 +33,9 @@ else
     echo "The file $BDB_FILE already contains the changes. No further modification is needed."
 fi
 
-make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=arm64-apple-darwin -j$(nproc --all)
+make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=aarch64-apple-darwin -j$(sysctl -n hw.ncpu)
 ./autogen.sh
 # -Wno-deprecated-builtins -Wno-enum-constexpr-conversion
 CXXFLAGS="-g0 -O2 -Wno-unknown-warning-option" \
-CONFIG_SITE="$PWD/depends/arm64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70 --host=arm64-apple-darwin
-make -j$(nproc --all) # V=1
+CONFIG_SITE="$PWD/depends/aarch64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70 --host=aarch64-apple-darwin
+make -j$(sysctl -n hw.ncpu) # V=1
