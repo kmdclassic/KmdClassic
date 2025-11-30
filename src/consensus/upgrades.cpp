@@ -18,6 +18,7 @@
  ******************************************************************************/
 
 #include "consensus/upgrades.h"
+#include "chain.h"
 #include "util.h"
 extern int32_t KOMODO_NSPV;
 #define NSPV_BRANCHID 0x76b809bb
@@ -176,4 +177,25 @@ boost::optional<int> NextActivationHeight(
         return params.vUpgrades[idx.get()].nActivationHeight;
     }
     return boost::none;
+}
+
+static bool IsKMDCLenabled(const Consensus::Params &params, int nHeight) {
+    
+    if (!chainName.isKMD()) {
+        return false;
+    }
+
+    if (params.nKMDCLActivationHeight == boost::none) {
+        return false;
+    }
+    return nHeight >= params.nKMDCLActivationHeight.get();
+}
+
+bool IsKMDCLenabled(const Consensus::Params &params,
+                   const CBlockIndex *pindexPrev) {
+    if (pindexPrev == nullptr) {
+        return false;
+    }
+
+    return IsKMDCLenabled(params, pindexPrev->nHeight);
 }

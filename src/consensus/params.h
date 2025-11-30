@@ -123,6 +123,8 @@ struct Params {
     uint256 powAlternate; // minimum dificulty limit if EQUIHASH not used
     boost::optional<uint32_t> nPowAllowMinDifficultyBlocksAfterHeight;
     boost::optional<uint32_t> nHF22Height;
+    /** Block height when new KMDCL rules start to apply */
+    boost::optional<uint32_t> nKMDCLActivationHeight;
     uint32_t nHF22NotariesPriorityRotateDelta;
     int64_t nPowAveragingWindow; // lookback window to determine block production speed averages
     int64_t nPowMaxAdjustDown; // max percentage difficulty level should be lowered

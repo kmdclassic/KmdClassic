@@ -122,6 +122,7 @@ public:
         consensus.nPowTargetSpacing = 1 * 60;
         consensus.nPowAllowMinDifficultyBlocksAfterHeight = boost::none;
         consensus.nHF22Height = 2973410; /* nS6HardforkHeight + 7 * 1440 (~1 week) */
+        consensus.nKMDCLActivationHeight = 5000000; /* Block height when new KMDCL rules start to apply */
         consensus.nHF22NotariesPriorityRotateDelta = 20;
         assert(0 < consensus.nHF22NotariesPriorityRotateDelta);
         consensus.vUpgrades[Consensus::BASE_SPROUT].nProtocolVersion = 170002;
@@ -369,6 +370,7 @@ public:
         consensus.nPowTargetSpacing = 2.5 * 60;
         consensus.nPowAllowMinDifficultyBlocksAfterHeight = 299187;
         consensus.nHF22Height = boost::none;
+        consensus.nKMDCLActivationHeight = boost::none; /* Not active on TestNet */
         consensus.nHF22NotariesPriorityRotateDelta = 1;
         assert(0 < consensus.nHF22NotariesPriorityRotateDelta);
         consensus.vUpgrades[Consensus::BASE_SPROUT].nProtocolVersion = 170002;
@@ -461,6 +463,7 @@ public:
         consensus.nPowTargetSpacing = 2.5 * 60;
         consensus.nPowAllowMinDifficultyBlocksAfterHeight = 0;
         consensus.nHF22Height = boost::none;
+        consensus.nKMDCLActivationHeight = 0; /* Always active on RegTest */
         consensus.nHF22NotariesPriorityRotateDelta = 1;
         assert(0 < consensus.nHF22NotariesPriorityRotateDelta);
         consensus.vUpgrades[Consensus::BASE_SPROUT].nProtocolVersion = 170002;
