@@ -4485,7 +4485,7 @@ static bool ActivateBestChainStep(bool fSkipdpow, CValidationState &state, CBloc
             if ( !DisconnectTip(state) )
                 break;
         }
-        LogPrintf("reached rewind.%d, best to do: ./komodo-cli -ac_name=%s stop\n",KOMODO_REWIND,chainName.symbol().c_str());
+        LogPrintf("reached rewind.%d, best to do: ./kmdclassic-cli -ac_name=%s stop\n",KOMODO_REWIND,chainName.symbol().c_str());
 #ifdef WIN32
         boost::this_thread::sleep(boost::posix_time::milliseconds(20000));
 #else

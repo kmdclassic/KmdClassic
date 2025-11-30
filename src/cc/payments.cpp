@@ -29,7 +29,7 @@
  
  First step is to create txids with the info needed in their opreturns. this info is the weight, scriptPubKey and opret if needed. To do that txidopret is used:
  
- ./c is a script that invokes komodo-cli with the correct -ac_name
+ ./c is a script that invokes kmdclassic-cli with the correct -ac_name
  
  ./c paymentstxidopret \"[9,%222102d6f13a8f745921cdb811e32237bb98950af1a5952be7b3d429abd9152f8e388dac%22]\" -> rawhex with txid 95d9fc8d8a3ef63693c7427e59ff5e177ef63b7345d5f6d6497ac262699a8def
  

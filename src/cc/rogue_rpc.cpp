@@ -50,29 +50,29 @@ std::string Rogue_pname = "";
  
  Here is how to play:
  
- ./komodo-cli -ac_name=ROGUE cclib newgame 17 \"[3,10]\" -> this will create a hex transaction that when broadcast with sendrawtransaction will get a gametxid onto the blockchain. This specific command was for 3 players and a buyin of 10 ROGUE. Lets assume the gametxid is 4fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a, most all the other commands will need the gametxid.
+ ./kmdclassic-cli -ac_name=ROGUE cclib newgame 17 \"[3,10]\" -> this will create a hex transaction that when broadcast with sendrawtransaction will get a gametxid onto the blockchain. This specific command was for 3 players and a buyin of 10 ROGUE. Lets assume the gametxid is 4fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a, most all the other commands will need the gametxid.
  
  you can always find all the existing games with:
  
-  ./komodo-cli -ac_name=ROGUE cclib pending 17
+  ./kmdclassic-cli -ac_name=ROGUE cclib pending 17
  
  and info about a specific game with:
  
-  ./komodo-cli -ac_name=ROGUE cclib gameinfo 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22]\"
+  ./kmdclassic-cli -ac_name=ROGUE cclib gameinfo 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22]\"
 
  due to quirks of various parsing at the shell, rpc and internal level, the above convention is used where %22 is added where " should be. also all fields are separated by , without any space.
  
  When you do a gameinfo command it will show a "run" field and that will tell you if you are registered for the game or not. If not, the "run" field shows the register syntax you need to do, if you are registered, it will show the command line to start the rogue game that is playing the registered game.
  
-./komodo-cli -ac_name=ROGUE cclib register 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22,%22playerdata_txid%22]\"
+./kmdclassic-cli -ac_name=ROGUE cclib register 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22,%22playerdata_txid%22]\"
 
  If you want to cash in your ingame gold and preserve your character for another battle, do the bailout:
  
-./komodo-cli -ac_name=ROGUE cclib bailout 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22]\"
+./kmdclassic-cli -ac_name=ROGUE cclib bailout 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22]\"
 
  If you won your game before anybody else did or if you are the last one left who didnt bailout, you can claim the prize:
  
- ./komodo-cli -ac_name=ROGUE cclib highlander 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22]\"
+ ./kmdclassic-cli -ac_name=ROGUE cclib highlander 17 \"[%224fd6f5cad0fac455e5989ca6eef111b00292845447075a802e9335879146ad5a%22]\"
 
  The txid you get from the bailout or highlander transactions is the "playerdata_txid" that you can use in future games.
  
@@ -136,7 +136,7 @@ std::string Rogue_pname = "";
 // ./rogue <seed> gui -> creates keystroke files
 // ./c cclib register 17 \"[%226d3243c6e5ab383898b28a87e01f6c00b5bdd9687020f17f5caacc8a61febd19%22,%222475182f9d5169d8a3249d17640e4eccd90f4ee43ab04791129b0fa3f177b14a%22]\"
 // ./c cclib bailout 17 \"[%226d3243c6e5ab383898b28a87e01f6c00b5bdd9687020f17f5caacc8a61febd19%22]\"
-// ./komodo-cli -ac_name=ROGUE cclib register 17 \"[%22a898f4ceef7647ba113b9f3c24ef045f5d134935a3b09bdd1a997b9d474f4c1b%22,%22f11d0cb4e2e4c21f029a1146f8e5926f11456885b7ab7d665096f5efedec8ea0%22]\"
+// ./kmdclassic-cli -ac_name=ROGUE cclib register 17 \"[%22a898f4ceef7647ba113b9f3c24ef045f5d134935a3b09bdd1a997b9d474f4c1b%22,%22f11d0cb4e2e4c21f029a1146f8e5926f11456885b7ab7d665096f5efedec8ea0%22]\"
 
 
 CScript rogue_newgameopret(int64_t buyin,int32_t maxplayers)
@@ -702,7 +702,7 @@ uint64_t rogue_gamefields(UniValue &obj,int64_t maxplayers,int64_t buyin,uint256
                 obj.push_back(Pair("seed",(int64_t)seed));
                 if ( rogue_iamregistered(maxplayers,gametxid,tx,myrogueaddr) > 0 )
                     sprintf(cmd,"cc/rogue/rogue %llu %s",(long long)seed,gametxid.ToString().c_str());
-                else sprintf(cmd,"./komodo-cli -ac_name=%s cclib register %d \"[%%22%s%%22]\"",chainName.symbol().c_str(),EVAL_ROGUE,gametxid.ToString().c_str());
+                else sprintf(cmd,"./kmdclassic-cli -ac_name=%s cclib register %d \"[%%22%s%%22]\"",chainName.symbol().c_str(),EVAL_ROGUE,gametxid.ToString().c_str());
                 obj.push_back(Pair("run",cmd));
             }
         }

@@ -105,9 +105,9 @@ static int AppInitRPC(int argc, char* argv[])
         std::string strUsage = _("Komodo RPC client version") + " " + FormatFullVersion() + "\n" + PrivacyInfo();
         if (!mapArgs.count("-version")) {
             strUsage += "\n" + _("Usage:") + "\n" +
-                  "  komodo-cli [options] <command> [params]  " + _("Send command to Komodo") + "\n" +
-                  "  komodo-cli [options] help                " + _("List commands") + "\n" +
-                  "  komodo-cli [options] help <command>      " + _("Get help for a command") + "\n";
+                  "  kmdclassic-cli [options] <command> [params]  " + _("Send command to Komodo") + "\n" +
+                  "  kmdclassic-cli [options] help                " + _("List commands") + "\n" +
+                  "  kmdclassic-cli [options] help <command>      " + _("Get help for a command") + "\n";
 
             strUsage += "\n" + HelpMessageCli();
         } else {
