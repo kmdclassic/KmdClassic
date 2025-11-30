@@ -127,7 +127,7 @@ Intro::Intro(QWidget *parent) :
         .arg(tr(PACKAGE_NAME))
         .arg(BLOCK_CHAIN_SIZE)
         .arg(2009)
-        .arg(tr("Komodo"))
+        .arg(tr("KmdClassic"))
     );
     ui->lblExplanation2->setText(ui->lblExplanation2->text().arg(tr(PACKAGE_NAME)));
 
@@ -228,7 +228,7 @@ bool Intro::pickDataDirectory()
         settings.setValue("fReset", false);
     }
     /* Only override -datadir if different from the default, to make it possible to
-     * override -datadir in the komodo.conf file in the default data directory
+     * override -datadir in the kmdclassic.conf file in the default data directory
      * (to be consistent with komodod behavior)
      */
     if(dataDir != getDefaultDataDirectory())

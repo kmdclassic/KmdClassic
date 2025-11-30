@@ -433,7 +433,7 @@ bool openKomodoConf()
     
     configFile.close();
     
-    /* Open komodo.conf with the associated application */
+    /* Open kmdclassic.conf with the associated application */
     return QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
 

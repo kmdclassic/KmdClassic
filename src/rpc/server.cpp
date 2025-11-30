@@ -279,7 +279,7 @@ UniValue stop(const UniValue& params, bool fHelp, const CPubKey& mypk)
 
     // Shutdown will take long enough that the response should get back
     StartShutdown();
-    sprintf(buf,"%s server stopping", !chainName.isKMD() ? chainName.symbol().c_str() : "Komodo");
+    sprintf(buf,"%s server stopping", !chainName.isKMD() ? chainName.symbol().c_str() : "KmdClassic");
     return buf;
 }
 

@@ -518,7 +518,7 @@ static std::string FormatException(const std::exception* pex, const char* pszThr
     char pszModule[MAX_PATH] = "";
     GetModuleFileNameA(NULL, pszModule, sizeof(pszModule));
 #else
-    const char* pszModule = "Komodo";
+    const char* pszModule = "KmdClassic";
 #endif
     if (pex)
         return strprintf(
@@ -579,7 +579,7 @@ boost::filesystem::path GetAppDir()
  * @brief get the OS-specific default komodod data directory
  * @note Windows: be "C:\Users\[username]\AppData\Roaming\Komodo"
  * @note Mac: ~/Library/Application Support/Komodo
- * @note Unix: ~/.komodo
+ * @note Unix: ~/.kmdclassic
  * @returns the default path to the Komodo data directory
  */
 boost::filesystem::path GetDefaultDataDir()
@@ -589,11 +589,11 @@ boost::filesystem::path GetDefaultDataDir()
 #if defined(_WIN32) || defined(MAC_OSX)
     if (chainName.isKMD())
     {
-        pathRet /= "Komodo";
+        pathRet /= "KmdClassic";
     }
     else
     {
-        pathRet /= "Komodo";
+        pathRet /= "KmdClassic";
         TryCreateDirectory(pathRet);
         pathRet /= chainName.symbol();
     }
@@ -601,9 +601,9 @@ boost::filesystem::path GetDefaultDataDir()
 #else
     // Unix
     if (chainName.isKMD())
-        return pathRet / ".komodo";
+        return pathRet / ".kmdclassic";
     else 
-        return pathRet / ".komodo" / chainName.symbol();
+        return pathRet / ".kmdclassic" / chainName.symbol();
 #endif
 }
 
@@ -684,7 +684,7 @@ const boost::filesystem::path GetExportDir()
  * @note looks at the -datadir command-line parameter or OS-specific defaults
  * @note creates the directory if it does not already exist
  * @param fNetSpecific if true, adds network-specific subdirectory (i.e. "regtest" or "testnet3")
- * @returns the full OS-specific data directory including Komodo (i.e. "~/.komodo")
+ * @returns the full OS-specific data directory including KmdClassic (i.e. "~/.kmdclassic")
  */
 const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 {
@@ -731,9 +731,9 @@ boost::filesystem::path GetConfigFile()
     else
     {
 #ifdef __APPLE__
-        strcpy(confname,"Komodo.conf");
+        strcpy(confname,"KmdClassic.conf");
 #else
-        strcpy(confname,"komodo.conf");
+        strcpy(confname,"kmdclassic.conf");
 #endif
     }
     boost::filesystem::path pathConfigFile(GetArg("-conf",confname));
@@ -749,14 +749,14 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
 {
     boost::filesystem::ifstream streamConfig(GetConfigFile());
     if (!streamConfig.good())
-        return; // No komodo.conf file is OK
+        return; // No kmdclassic.conf file is OK
 
     set<string> setOptions;
     setOptions.insert("*");
 
     for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
     {
-        // Don't overwrite existing settings so command line settings override komodo.conf
+        // Don't overwrite existing settings so command line settings override kmdclassic.conf
         string strKey = string("-") + it->string_key;
         if (mapSettingsRet.count(strKey) == 0)
         {

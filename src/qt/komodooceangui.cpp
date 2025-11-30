@@ -929,7 +929,7 @@ void KomodoOceanGUI::setNumBlocks(int count, const QDateTime& blockDate, double 
 
 void KomodoOceanGUI::message(const QString &title, const QString &message, unsigned int style, bool *ret)
 {
-    QString strTitle = tr("Komodo"); // default title
+    QString strTitle = tr("KmdClassic"); // default title
     // Default to information icon
     int nMBoxIcon = QMessageBox::Information;
     int nNotifyIcon = Notificator::Information;
