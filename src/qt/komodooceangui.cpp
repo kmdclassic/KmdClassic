@@ -133,7 +133,12 @@ KomodoOceanGUI::KomodoOceanGUI(const PlatformStyle *_platformStyle, const Networ
         move(QGuiApplication::primaryScreen()->availableGeometry().center() - frameGeometry().center());
     }
 
-    QString windowTitle = "[" + QString(chainName.ToString().c_str()) + "] ";
+    std::string chainNameStr = chainName.ToString();
+    if (chainNameStr == "KMD") {
+        chainNameStr = "KMDCL";
+    }
+    QString chainNameQStr = QString::fromStdString(chainNameStr);
+    QString windowTitle = "[" + chainNameQStr + "] ";
     windowTitle += tr(PACKAGE_NAME) + " - ";
 #ifdef ENABLE_WALLET
     enableWallet = WalletModel::isWalletEnabled();
