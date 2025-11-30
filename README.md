@@ -1,105 +1,49 @@
-# KomodoOcean (komodo-qt) #
+# Komodo Classic (KMDCL)
 
-![Downloads](https://img.shields.io/github/downloads/DeckerSU/KomodoOcean/total)
+> **⚠️ WARNING: kmdclassic is experimental and a work-in-progress. Use at your own risk.**
 
-![](./doc/images/komodo-qt-promo-2020-01.jpg)
+## Overview
 
-## Overview ##
+Komodo Classic (KMDCL) is a project that aims to restore Komodo to its original vision as conceived by its creator, jl777. Despite the fundraising campaign not reaching its goal, we have decided to proceed with the implementation because we believe in the original purpose of KMD as it was originally designed.
 
-KomodoOcean, also known as Komodo-QT, is the first native graphical wallet for the Komodo ecosystem, which includes the KMD coin and its assetchains (ACs). Built with the Qt framework, it offers an easy-to-use interface for managing Komodo assets. With KomodoOcean, users can send and receive KMD and interact with assetchains (ACs), view their transaction history, and access various features of the [Komodo Platform](https://komodoplatform.com/).
+## Project Website
 
-While the Komodo assetchains provide advanced privacy features, the main KMD coin does not include these privacy options. KomodoOcean stands out as a pioneering Qt-based wallet for a ZCash fork, especially since ZCash itself still does not have a native Qt wallet.
+Visit [https://kmdclassic.com/](https://kmdclassic.com/) for more information about the project.
 
-KomodoOcean is available on three OS platforms: `Windows`, `Linux`, and `macOS`.
+<div align="center">
+  <img src="icons/kmdclassic.png" alt="Komodo Classic" />
+</div>
 
-Use the default `static` branch and the following scripts in `./zcutil` to build, depending on your target platform and architecture:
+## Key Features & Advantages Over Original KMD
 
-- **Linux**:
-  - `build.sh`: Native build for Linux.
-  - `build-no-qt.sh`: Native build for Linux, but without Qt (produces a daemon-only version).
-  - `build-aarch64-cross.sh`: Cross-compilation for ARM (aarch64) on Linux.
+Komodo Classic will restore and maintain the core features that made Komodo unique:
 
-- **Windows**:
-  - `build-win.sh`: Cross-compilation for Windows from a Linux environment.
+- **Private Transactions**: KMDCL will include private transaction capabilities, restoring the privacy features that were part of the original Komodo vision.
 
-- **MacOS**:
-  - `build-mac.sh`: Native build for macOS (x86_64). Use on Intel-based Macs or run with `arch -x86_64 /bin/zsh` on Apple Silicon Macs.
-  - `build-mac-cross.sh`: Cross-compilation for macOS (x86_64) from a Linux environment; produces `Mach-O 64-bit x86_64 executable` binaries.
-  - `build-mac-arm.sh`: Native build for macOS aarch64. Use this on Apple Silicon Macs to produce `Mach-O 64-bit executable arm64` binaries.
-  - `build-mac-arm-cross.sh`: Cross-compilation for macOS aarch64 from a Linux environment.
+- **5% APR User Rewards (Interest)**: Just as it was in the original KMD, KMDCL will feature a 5% Annual Percentage Rate (APR) reward system for users, providing interest on holdings as originally intended by the creator.
 
-Or use the `static-experimental` branch to access the latest `nightly` features.
+## Technical Foundation
 
-**Note**: Cross-compiled `arm64` Darwin (macOS) binaries do not include a digital signature by default. To use these binaries on macOS, they must be [signed](https://github.com/DeckerSU/KomodoOcean/wiki/F.A.Q.#q-the-zsh-killed-message-appears-on-macos-when-running-a-aarch64-apple-darwin-cross-compiled-binary) before execution. Failure to sign these binaries may result in issues with macOS security settings, preventing them from running properly.
+This project is built on the **KomodoOcean** codebase, which was chosen for several important reasons:
 
-Please note that the parent repository [ip-gpu/KomodoOcean](https://github.com/ip-gpu/KomodoOcean) is no longer maintained!
+- **GUI Support**: Full Qt-based graphical user interface for an enhanced user experience
+- **Cross-Platform**: Native support for Windows, Linux, and macOS
+- **Performance**: This full node implementation is faster and more progressive than the original `komodod`
+- **Modern Architecture**: Built on a more advanced and maintainable codebase
 
-Visit `#🤝│general-support` or `#wallet-ocean-qt` channel in [Komodo Discord](https://komodoplatform.com/discord) for more information.
+## Project Status
 
-## Build Instructions ##
+**Work on this project has just begun.** We will be providing regular updates on the progress of development here in this repository. 
 
-For detailed build instructions, see [HOW-TO-BUILD.md](HOW-TO-BUILD.md).
+**⚠️ Important**: Until the first official release is available, it is **too early to build and use** this project. The codebase is currently under active development and is not yet ready for production use.
 
-**komodo is experimental and a work-in-progress.** Use at your own risk.
+## Origins & Vision
 
-## Docker ##
+Komodo Classic traces its roots back to the original vision of jl777, the creator of Komodo. This project represents an effort to preserve and implement the foundational principles and features that were part of Komodo's original design, ensuring that the community has access to a version of Komodo that stays true to its creator's initial intent.
 
-:whale: [deckersu/komodoocean](https://hub.docker.com/r/deckersu/komodoocean) - This Docker image provides the official KomodoOcean daemon for the Komodo blockchain platform. Komodod is the core component responsible for running a Komodo node, facilitating transaction validation, block creation, and communication within the network.
+## Disclaimer
 
-Read the description on [Docker Hub](https://hub.docker.com/r/deckersu/komodoocean) for usage examples.
+**kmdclassic is experimental and a work-in-progress. Use at your own risk.**
 
-## Getting started ##
-
-### Download ZCash Parameters
-
-Before running KomodoOcean, you need to download the ZCash cryptographic parameters. Run the following script:
-
-```shell
-./zcutil/fetch-params.sh
-```
-
-This script will download the required parameters files needed for the zero-knowledge proofs used in Komodo.
-
-### Create komodo.conf
-
-Before start the wallet you should [create config file](https://github.com/DeckerSU/KomodoOcean/wiki/F.A.Q.#q-after-i-start-komodo-qt-i-receive-the-following-error-error-cannot-parse-configuration-file-missing-komodoconf-only-use-keyvalue-syntax-what-should-i-do) `komodo.conf` at one of the following locations:
-
-- Linux - `~/.komodo/komodo.conf`
-- Windows - `%APPDATA%\Komodo\komodo.conf`
-- MacOS - `~/Library/Application Support/Komodo/komodo.conf`
-
-With the following content:
-
-```
-txindex=1
-rpcuser=komodo
-rpcpassword=local321 # don't forget to change password
-rpcallowip=127.0.0.1
-rpcbind=127.0.0.1
-server=1
-```
-
-Bash one-liner for Linux to create `komodo.conf` with random RPC password:
-
-```shell
-mkdir -p ~/.komodo && \
-RANDPASS=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 16) && \
-cat > ~/.komodo/komodo.conf << EOF
-txindex=1
-rpcuser=komodo
-rpcpassword=${RANDPASS}
-rpcallowip=127.0.0.1
-rpcbind=127.0.0.1
-server=1
-EOF
-```
-
-## Developers of Qt wallet ##
-
-- Original creator: [Ocean](https://github.com/ip-gpu) (created the first version and maintained it initially)
-- Main developer: [Decker](https://github.com/DeckerSU) (maintains and develops the project to this day)
-- ☕🍪 [Buy DeckerSU a tea and cookies!](https://github.com/sponsors/DeckerSU)
-
-Special thanks to [jl777](https://github.com/jl777) and [ca333](https://github.com/ca333) for being a constant source of learning and inspiration.
-
+This software is provided "as is" without warranty of any kind. The development team is not responsible for any loss of funds or other damages that may occur from using this software.
 
