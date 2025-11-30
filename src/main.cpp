@@ -2064,7 +2064,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         PrecomputedTransactionData txdata(tx);
-        if (!ContextualCheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true, txdata, Params().GetConsensus(), consensusBranchId))
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        if (!ContextualCheckInputs(tx, state, view, true, flags, true, txdata, Params().GetConsensus(), consensusBranchId))
         {
             //LogPrintf("accept failure.9\n");
             return error("AcceptToMemoryPool: ConnectInputs failed %s", hash.ToString());
