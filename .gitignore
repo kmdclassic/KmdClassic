@@ -151,5 +151,6 @@ src/komodo-cli
 src/komodo-tx
 src/kmdclassic-cli
 src/kmdclassic-tx
+src/komodo-test
 src/univalue/test/object
 src/wallet-utility
