@@ -2,5 +2,5 @@
 
 # ToDo: check for docker arg ac_name
 
-/komodo/src/komodo-cli $1 $2 $3 $4
+/komodo/src/kmdclassic-cli $1 $2 $3 $4
 

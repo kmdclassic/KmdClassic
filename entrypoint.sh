@@ -22,4 +22,4 @@ if [[ "$nocheck" -eq 0 && "$(stat -c '%u:%g' /data)" != "65534:65534" ]]; then
 fi
 
 /app/fetch-params.sh
-exec /app/komodod -datadir=/data/.komodo "$@"
+exec /app/kmdclassicd -datadir=/data/.komodo "$@"

@@ -41,7 +41,7 @@ fi
 
 echo
 echo "****************************************************"
-echo "Running: komodod ${args[@]}"
+echo "Running: kmdclassicd ${args[@]}"
 echo "****************************************************"
 
-exec komodod ${args[@]}
+exec kmdclassicd ${args[@]}

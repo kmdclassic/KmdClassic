@@ -1073,7 +1073,7 @@ std::string PrivacyInfo()
 std::string LicenseInfo()
 {
 
-    const std::string URL_SOURCE_CODE = "<https://github.com/KomodoPlatform/KomodoOcean>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/kmdclassic/KmdClassic>";
 
     return "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2009-%i The Bitcoin Core Developers"), COPYRIGHT_YEAR)) + "\n" +
@@ -1081,6 +1081,7 @@ std::string LicenseInfo()
            FormatParagraph(strprintf(_("Copyright (C) 2015-%i jl777 and SuperNET developers"), COPYRIGHT_YEAR)) + "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2018-%i The Verus developers"), COPYRIGHT_YEAR)) + "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2017-%i Ocean and Decker developers"), COPYRIGHT_YEAR)) + "\n" +
+           FormatParagraph(strprintf(_("Copyright (C) 2025-%i KmdClassic Community developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
            FormatParagraph(strprintf(_("Please contribute if you find %s useful. "
                        "Visit %s for further information about the software."),
