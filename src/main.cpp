@@ -1194,14 +1194,11 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
     bool saplingActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_SAPLING);
     bool isSprout = !overwinterActive;
     bool dormancyActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_DORMANCY);
+
     if (dormancyActive) {
         // TODO: Dormancy rules apply
-
-        // We should check tx.nVersionGroupId here, it must correspond 
-        // Dormancy version group id, which is not determined yet. May be
-        // we should use other tx version, like DORMANCY_MIN_CURRENT_TX_VERSION,
-        // etc.
     }
+
     // If Sprout rules apply, reject transactions which are intended for Overwinter and beyond
     if (isSprout && tx.fOverwintered) {
         int32_t ht = Params().GetConsensus().vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight;
@@ -1289,28 +1286,34 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
                             REJECT_INVALID, "bad-txns-oversize");
     }
 
+    auto consensusBranchId = CurrentEpochBranchId(nHeight, Params().GetConsensus());
+    auto prevConsensusBranchId = PrevEpochBranchId(consensusBranchId, Params().GetConsensus());
     uint256 dataToBeSigned;
+    uint256 prevDataToBeSigned;
 
     if (!tx.IsMint() &&
         (!tx.vjoinsplit.empty() ||
-         !tx.vShieldedSpend.empty() ||
-         !tx.vShieldedOutput.empty()))
+        !tx.vShieldedSpend.empty() ||
+        !tx.vShieldedOutput.empty()))
     {
-        auto consensusBranchId = CurrentEpochBranchId(nHeight, Params().GetConsensus());
         // Empty output script.
         CScript scriptCode;
         try {
             dataToBeSigned = SignatureHash(scriptCode, tx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
+            prevDataToBeSigned = SignatureHash(scriptCode, tx, NOT_AN_INPUT, SIGHASH_ALL, 0, prevConsensusBranchId);
         } catch (std::logic_error ex) {
+            // A logic error should never occur because we pass NOT_AN_INPUT and
+            // SIGHASH_ALL to SignatureHash().
             return state.DoS(100, error("CheckTransaction(): error computing signature hash"),
-                             REJECT_INVALID, "error-computing-signature-hash");
+                                REJECT_INVALID, "error-computing-signature-hash");
         }
-
     }
 
-    if (!(tx.IsMint() || tx.vjoinsplit.empty()))
+    
+    if (!tx.IsMint() && !tx.vjoinsplit.empty())
     {
         BOOST_STATIC_ASSERT(crypto_sign_PUBLICKEYBYTES == 32);
+        int dosLevelPotentiallyRelaxing = isInitBlockDownload() ? 0 : 10 /* DoS level set to 10 to be more forgiving */;
 
         // We rely on libsodium to check that the signature is canonical.
         // https://github.com/jedisct1/libsodium/commit/62911edb7ff2275cccd74bf1c8aefcc4d76924e0
@@ -1318,9 +1321,25 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
                                         dataToBeSigned.begin(), 32,
                                         tx.joinSplitPubKey.begin()
                                         ) != 0) {
-            return state.DoS(isInitBlockDownload() ? 0 : 100,
-                                error("CheckTransaction(): invalid joinsplit signature"),
-                                REJECT_INVALID, "bad-txns-invalid-joinsplit-signature");
+            // Check whether the failure was caused by an outdated consensus
+            // branch ID; if so, inform the node that they need to upgrade. We
+            // only check the previous epoch's branch ID, on the assumption that
+            // users creating transactions will notice their transactions
+            // failing before a second network upgrade occurs.
+            if (crypto_sign_verify_detached(&tx.joinSplitSig[0],
+                                            prevDataToBeSigned.begin(), 32,
+                                            tx.joinSplitPubKey.begin()
+                                            ) == 0) {
+                return state.DoS(
+                    dosLevelPotentiallyRelaxing, false, REJECT_INVALID, strprintf(
+                        "old-consensus-branch-id (Expected %s, found %s)",
+                        HexInt(consensusBranchId),
+                        HexInt(prevConsensusBranchId)));
+            }
+            return state.DoS(
+                dosLevelPotentiallyRelaxing,
+                error("CheckTransaction(): invalid joinsplit signature"),
+                REJECT_INVALID, "bad-txns-invalid-joinsplit-signature");
         }
     }
 
