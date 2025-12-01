@@ -104,7 +104,7 @@ enum
     SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY = (1U << 9),
 };
 
-bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
+bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, uint32_t flags, ScriptError* serror);
 
 struct PrecomputedTransactionData
 {
@@ -193,14 +193,14 @@ public:
 bool EvalScript(
     std::vector<std::vector<unsigned char> >& stack,
     const CScript& script,
-    unsigned int flags,
+    uint32_t flags,
     const BaseSignatureChecker& checker,
     uint32_t consensusBranchId,
     ScriptError* error = NULL);
 bool VerifyScript(
     const CScript& scriptSig,
     const CScript& scriptPubKey,
-    unsigned int flags,
+    uint32_t flags,
     const BaseSignatureChecker& checker,
     uint32_t consensusBranchId,
     ScriptError* serror = NULL);

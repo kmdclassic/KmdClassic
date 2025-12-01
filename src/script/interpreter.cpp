@@ -206,7 +206,7 @@ bool static IsDefinedHashtypeSignature(const valtype &vchSig) {
     return true;
 }
 
-bool CheckSignatureEncoding(const vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror) {
+bool CheckSignatureEncoding(const vector<unsigned char> &vchSig, uint32_t flags, ScriptError* serror) {
     // Empty signature. Not strictly DER encoded, but allowed to provide a
     // compact way to provide an invalid signature for use with CHECK(MULTI)SIG
     if (vchSig.size() == 0) {
@@ -223,7 +223,7 @@ bool CheckSignatureEncoding(const vector<unsigned char> &vchSig, unsigned int fl
     return true;
 }
 
-bool static CheckPubKeyEncoding(const valtype &vchSig, unsigned int flags, ScriptError* serror) {
+bool static CheckPubKeyEncoding(const valtype &vchSig, uint32_t flags, ScriptError* serror) {
     if ((flags & SCRIPT_VERIFY_STRICTENC) != 0 && !IsCompressedOrUncompressedPubKey(vchSig)) {
         return set_error(serror, SCRIPT_ERR_PUBKEYTYPE);
     }
@@ -256,7 +256,7 @@ bool static CheckMinimalPush(const valtype& data, opcodetype opcode) {
 bool EvalScript(
     vector<vector<unsigned char> >& stack,
     const CScript& script,
-    unsigned int flags,
+    uint32_t flags,
     const BaseSignatureChecker& checker,
     uint32_t consensusBranchId,
     ScriptError* serror)
@@ -1500,7 +1500,7 @@ bool EvalCryptoConditionSig(
 bool VerifyScript(
     const CScript& scriptSig,
     const CScript& scriptPubKey,
-    unsigned int flags,
+    uint32_t flags,
     const BaseSignatureChecker& checker,
     uint32_t consensusBranchId,
     ScriptError* serror)
