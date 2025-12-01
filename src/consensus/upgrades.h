@@ -116,10 +116,4 @@ boost::optional<int> NextActivationHeight(
     int nHeight,
     const Consensus::Params& params);
 
-/**
- * Returns true if KMDCL rules are enabled as of the given block index.
- */
-bool IsKMDCLenabled(const Consensus::Params &params,
-                   const CBlockIndex *pindexPrev);
-
 #endif // ZCASH_CONSENSUS_UPGRADES_H

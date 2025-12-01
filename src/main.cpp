@@ -21,6 +21,7 @@
  ******************************************************************************/
 
 #include "main.h"
+#include "consensus/consensus.h"
 #include "sodium.h"
 #include "consensus/merkle.h"
 
@@ -1192,7 +1193,15 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
     bool overwinterActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_OVERWINTER);
     bool saplingActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_SAPLING);
     bool isSprout = !overwinterActive;
+    bool dormancyActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_DORMANCY);
+    if (dormancyActive) {
+        // TODO: Dormancy rules apply
 
+        // We should check tx.nVersionGroupId here, it must correspond 
+        // Dormancy version group id, which is not determined yet. May be
+        // we should use other tx version, like DORMANCY_MIN_CURRENT_TX_VERSION,
+        // etc.
+    }
     // If Sprout rules apply, reject transactions which are intended for Overwinter and beyond
     if (isSprout && tx.fOverwintered) {
         int32_t ht = Params().GetConsensus().vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight;

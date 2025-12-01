@@ -51,6 +51,11 @@ const struct NUInfo NetworkUpgradeInfo[Consensus::MAX_NETWORK_UPGRADES] = {
         /*.nBranchId =*/ 0x76b809bb,
         /*.strName =*/ "Sapling",
         /*.strInfo =*/ "See https://z.cash/upgrade/sapling.html for details.",
+    },
+    {
+        /*.nBranchId =*/ 0x64726d6e,
+        /*.strName =*/ "Dormancy",
+        /*.strInfo =*/ "Dormancy network upgrade",
     }
 };
 
@@ -177,25 +182,4 @@ boost::optional<int> NextActivationHeight(
         return params.vUpgrades[idx.get()].nActivationHeight;
     }
     return boost::none;
-}
-
-static bool IsKMDCLenabled(const Consensus::Params &params, int nHeight) {
-    
-    if (!chainName.isKMD()) {
-        return false;
-    }
-
-    if (params.nKMDCLActivationHeight == boost::none) {
-        return false;
-    }
-    return nHeight >= params.nKMDCLActivationHeight.get();
-}
-
-bool IsKMDCLenabled(const Consensus::Params &params,
-                   const CBlockIndex *pindexPrev) {
-    if (pindexPrev == nullptr) {
-        return false;
-    }
-
-    return IsKMDCLenabled(params, pindexPrev->nHeight);
 }
