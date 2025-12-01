@@ -117,6 +117,18 @@ uint32_t CurrentEpochBranchId(int nHeight, const Consensus::Params& params)
     return NetworkUpgradeInfo[CurrentEpoch(nHeight, params)].nBranchId;
 }
 
+uint32_t PrevEpochBranchId(uint32_t currentBranchId, const Consensus::Params& params) {
+    if ( KOMODO_NSPV_SUPERLITE )
+        return(NSPV_BRANCHID); // prev of 0x76b809bb is 0x5ba81b19
+    for (int idx = Consensus::BASE_SPROUT + 1; idx < Consensus::MAX_NETWORK_UPGRADES; idx++) {
+        if (currentBranchId == NetworkUpgradeInfo[idx].nBranchId) {
+            return NetworkUpgradeInfo[idx - 1].nBranchId;
+        }
+    }
+    // Base case
+    return NetworkUpgradeInfo[Consensus::BASE_SPROUT].nBranchId;
+}
+
 bool IsConsensusBranchId(int branchId) {
     for (int idx = Consensus::BASE_SPROUT; idx < Consensus::MAX_NETWORK_UPGRADES; idx++) {
         if (branchId == NetworkUpgradeInfo[idx].nBranchId) {
