@@ -27,6 +27,7 @@
 #include "protocol.h"
 
 #define KOMODO_MINDIFF_NBITS 0x200f0f0f
+#define KMD_SAPLING_ACTIVATION_HEIGHT 1140409
 
 #include <vector>
 

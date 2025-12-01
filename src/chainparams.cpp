@@ -136,6 +136,17 @@ public:
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nProtocolVersion = 170007;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
 
+        // Set the Sapling and Overwinter activation heights for KMDCL, as it's already 
+        // known. This will allow us to skip call komodo_activate_sapling during LoadBlockIndexDB.
+        // Also komodo_activate_sapling called during ConnectTip() will be skipped.
+        if (chainName.isKMD() && ASSETCHAINS_SAPLING <= 0) {
+            // Here we can't call komodo_activate_sapling, so doing the same manually.
+            consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+            consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+            ASSETCHAINS_SAPLING = KMD_SAPLING_ACTIVATION_HEIGHT;
+            LogPrintf("%s: SET SAPLING ACTIVATION height.%d\n",__func__,KMD_SAPLING_ACTIVATION_HEIGHT);
+        }
+
         // The best chain should have at least this much work.
         // if (chainName.isKMD()) {
         //     consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000"); // TODO: fill with real KMD nMinimumChainWork value

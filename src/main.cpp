@@ -858,7 +858,9 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans) EXCLUSIVE_LOCKS_REQUIRE
     return nEvicted;
 }
 
-
+// Check for standard transaction types.
+// Called from AcceptToMemoryPool() to validate transactions before adding to mempool,
+// and in various test files (transaction_tests.cpp, script_P2SH_tests.cpp, etc.).
 bool IsStandardTx(const CTransaction& tx, string& reason, const int nHeight)
 {
     bool overwinterActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_OVERWINTER);
@@ -2829,7 +2831,7 @@ bool ContextualCheckInputs(
                            CValidationState &state,
                            const CCoinsViewCache &inputs,
                            bool fScriptChecks,
-                           unsigned int flags,
+                           uint32_t flags,
                            bool cacheStore,
                            PrecomputedTransactionData& txdata,
                            const Consensus::Params& consensusParams,
@@ -3433,7 +3435,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                              REJECT_INVALID, "bad-txns-BIP30");
     }
 
-    unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+    uint32_t flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
 
     // DERSIG (BIP66) is also always enforced, but does not have a flag.
 
@@ -6329,10 +6331,10 @@ bool static LoadBlockIndexDB()
 	      progress);
 
     EnforceNodeDeprecation(chainActive.Height(), true);
-    CBlockIndex *pindex;
-    if ( (pindex= chainActive.Tip()) != 0 )
+    if ( ASSETCHAINS_SAPLING <= 0 )
     {
-        if ( ASSETCHAINS_SAPLING <= 0 )
+        CBlockIndex *pindex = chainActive.Tip();
+        if ( pindex != nullptr )
         {
             LogPrintf("set sapling height, if possible from ht.%d %u\n",(int32_t)pindex->nHeight,(uint32_t)pindex->nTime);
             komodo_activate_sapling(pindex);
