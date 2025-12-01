@@ -85,7 +85,8 @@ bool TestSignTx(const CKeyStore& keystore, CMutableTransaction& mtx, int32_t vin
     CTransaction txNewConst(mtx);
     SignatureData sigdata;
     auto consensusBranchId = CurrentEpochBranchId(chainActive.Height()+1, Params().GetConsensus());
-    if (ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, vini, utxovalue, SIGHASH_ALL), scriptPubKey, sigdata, consensusBranchId) != 0) {
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+    if (ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, vini, utxovalue, SIGHASH_ALL), scriptPubKey, sigdata, consensusBranchId, flags) != 0) {
         UpdateTransaction(mtx, vini, sigdata);
         return true;
     } else {

@@ -2388,7 +2388,8 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
             txNew.vout[1].nValue = 0;
         } 
         CTransaction txNewConst(txNew);
-        signSuccess = ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, 0, *utxovaluep, SIGHASH_ALL), best_scriptPubKey, sigdata, consensusBranchId);
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        signSuccess = ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, 0, *utxovaluep, SIGHASH_ALL), best_scriptPubKey, sigdata, consensusBranchId, flags);
         UpdateTransaction(txNew,0,sigdata);
         ptr = (uint8_t *)&sigdata.scriptSig[0];
         siglen = sigdata.scriptSig.size();

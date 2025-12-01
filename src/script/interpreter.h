@@ -127,7 +127,8 @@ uint256 SignatureHash(
     int nHashType,
     const CAmount& amount,
     uint32_t consensusBranchId,
-    const PrecomputedTransactionData* cache = NULL);
+    uint32_t flags,
+    const PrecomputedTransactionData* cache = NULL /* null ok */);
 
 class BaseSignatureChecker
 {
@@ -136,7 +137,8 @@ public:
         const std::vector<unsigned char>& scriptSig,
         const std::vector<unsigned char>& vchPubKey,
         const CScript& scriptCode,
-        uint32_t consensusBranchId) const
+        uint32_t consensusBranchId,
+        uint32_t flags) const
     {
         return false;
     }
@@ -150,7 +152,8 @@ public:
             const std::vector<unsigned char>& condBin,
             const std::vector<unsigned char>& ffillBin,
             const CScript& scriptCode,
-            uint32_t consensusBranchId) const
+            uint32_t consensusBranchId,
+            uint32_t flags) const
     {
         return false;
     }
@@ -171,13 +174,14 @@ protected:
 public:
     TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(NULL) {}
     TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(&txdataIn) {}
-    bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, uint32_t consensusBranchId) const;
+    bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, uint32_t consensusBranchId, uint32_t flags) const;
     bool CheckLockTime(const CScriptNum& nLockTime) const;
     int CheckCryptoCondition(
         const std::vector<unsigned char>& condBin,
         const std::vector<unsigned char>& ffillBin,
         const CScript& scriptCode,
-        uint32_t consensusBranchId) const;
+        uint32_t consensusBranchId,
+        uint32_t flags) const;
     virtual int CheckEvalCondition(const CC *cond) const;
 };
 

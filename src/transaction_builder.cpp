@@ -268,7 +268,8 @@ boost::optional<CTransaction> TransactionBuilder::Build()
     uint256 dataToBeSigned;
     CScript scriptCode;
     try {
-        dataToBeSigned = SignatureHash(scriptCode, mtx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
+        // SignatureHash with flags=0: non-script context (JoinSplit signatures)
+        dataToBeSigned = SignatureHash(scriptCode, mtx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId, 0);
     } catch (std::logic_error ex) {
         librustzcash_sapling_proving_ctx_free(ctx);
         return boost::none;
@@ -292,13 +293,14 @@ boost::optional<CTransaction> TransactionBuilder::Build()
 
     // Transparent signatures
     CTransaction txNewConst(mtx);
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
     for (int nIn = 0; nIn < mtx.vin.size(); nIn++) {
         auto tIn = tIns[nIn];
         SignatureData sigdata;
         bool signSuccess = ProduceSignature(
             TransactionSignatureCreator(
                 keystore, &txNewConst, nIn, tIn.value, SIGHASH_ALL),
-            tIn.scriptPubKey, sigdata, consensusBranchId);
+            tIn.scriptPubKey, sigdata, consensusBranchId, flags);
 
         if (!signSuccess) {
             return boost::none;

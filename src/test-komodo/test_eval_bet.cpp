@@ -28,7 +28,7 @@ static int Dealer  = 0, Player1 = 1, Player2 = 2;
 
 int CCSign(CMutableTransaction &tx, unsigned int nIn, CC *cond, std::vector<int> keyIds) {
     PrecomputedTransactionData txdata(tx);
-    uint256 sighash = SignatureHash(CCPubKey(cond), tx, nIn, SIGHASH_ALL, 0, 0, &txdata);
+    uint256 sighash = SignatureHash(CCPubKey(cond), tx, nIn, SIGHASH_ALL, 0, 0, 0, &txdata);
     int nSigned = 0;
     for (int i=0; i<keyIds.size(); i++)
         nSigned += cc_signTreeSecp256k1Msg32(cond, playerSecrets[keyIds[i]].begin(), sighash.begin());

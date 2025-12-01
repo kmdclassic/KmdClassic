@@ -3578,7 +3578,8 @@ UniValue zc_raw_joinsplit(const UniValue& params, bool fHelp, const CPubKey& myp
     CScript scriptCode;
     CTransaction signTx(mtx);
     auto consensusBranchId = CurrentEpochBranchId(chainActive.Height() + 1, Params().GetConsensus());
-    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
+    // SignatureHash with flags=0: non-script context (JoinSplit signatures)
+    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId, 0);
 
     // Add the signature
     assert(crypto_sign_detached(&mtx.joinSplitSig[0], NULL,
@@ -5508,7 +5509,8 @@ int32_t komodo_notaryvin(CMutableTransaction &txNew, uint8_t *notarypub33, const
             txNew.nLockTime = nLockTimeIn;
         }
         CTransaction txNewConst(txNew);
-        signSuccess = ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, 0, nValue, SIGHASH_ALL), pk, sigdata, consensusBranchId);
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        signSuccess = ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, 0, nValue, SIGHASH_ALL), pk, sigdata, consensusBranchId, flags);
         if (!signSuccess)
             LogPrintf("notaryvin failed to create signature (tried to spend %s -> notaryvin)\n", out.ToString());
         else

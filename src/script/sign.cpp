@@ -41,11 +41,11 @@ uint256 SIG_TXHASH;
 
 TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore* keystoreIn, const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, int nHashTypeIn) : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), nHashType(nHashTypeIn), amount(amountIn), checker(txTo, nIn, amountIn) {}
 
-bool TransactionSignatureCreator::CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, uint32_t consensusBranchId, CKey *pprivKey, void *extraData) const
+bool TransactionSignatureCreator::CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, uint32_t consensusBranchId, uint32_t scriptFlags, CKey *pprivKey, void *extraData) const
 {
     CKey key; uint256 hash;
     try {
-        hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, consensusBranchId);
+        hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, consensusBranchId, scriptFlags);
     } catch (logic_error ex) {
         {
             LogPrintf("logic error\n");
@@ -105,10 +105,10 @@ bool TransactionSignatureCreator::CreateSig(std::vector<unsigned char>& vchSig, 
     return true;
 }
 
-static bool Sign1(const CKeyID& address, const BaseSignatureCreator& creator, const CScript& scriptCode, std::vector<valtype>& ret, uint32_t consensusBranchId)
+static bool Sign1(const CKeyID& address, const BaseSignatureCreator& creator, const CScript& scriptCode, std::vector<valtype>& ret, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     vector<unsigned char> vchSig;
-    if (!creator.CreateSig(vchSig, address, scriptCode, consensusBranchId))
+    if (!creator.CreateSig(vchSig, address, scriptCode, consensusBranchId, scriptFlags))
     {
         //LogPrintf("Sign1 creatsig error\n");
         return false;
@@ -117,7 +117,7 @@ static bool Sign1(const CKeyID& address, const BaseSignatureCreator& creator, co
     return true;
 }
 
-static bool SignN(const vector<valtype>& multisigdata, const BaseSignatureCreator& creator, const CScript& scriptCode, std::vector<valtype>& ret, uint32_t consensusBranchId)
+static bool SignN(const vector<valtype>& multisigdata, const BaseSignatureCreator& creator, const CScript& scriptCode, std::vector<valtype>& ret, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     int nSigned = 0;
     int nRequired = multisigdata.front()[0];
@@ -125,7 +125,7 @@ static bool SignN(const vector<valtype>& multisigdata, const BaseSignatureCreato
     {
         const valtype& pubkey = multisigdata[i];
         CKeyID keyID = CPubKey(pubkey).GetID();
-        if (Sign1(keyID, creator, scriptCode, ret, consensusBranchId))
+        if (Sign1(keyID, creator, scriptCode, ret, consensusBranchId, scriptFlags))
             ++nSigned;
     }
     return nSigned==nRequired;
@@ -220,7 +220,7 @@ CScript _CCPubKey(const CC *cond)
 }
 
 static bool SignStepCC(const BaseSignatureCreator& creator, const CScript& scriptPubKey, vector<valtype> &vSolutions,
-                       vector<valtype>& ret, uint32_t consensusBranchId)
+                       vector<valtype>& ret, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     CScript subScript;
     vector<CPubKey> vPK;
@@ -273,7 +273,7 @@ static bool SignStepCC(const BaseSignatureCreator& creator, const CScript& scrip
                 if (cc)
                 {
                     vector<unsigned char> vch;
-                    if (creator.CreateSig(vch, p.vKeys[0].GetID(), _CCPubKey(cc), consensusBranchId, &privKey, (void *)cc))
+                    if (creator.CreateSig(vch, p.vKeys[0].GetID(), _CCPubKey(cc), consensusBranchId, scriptFlags, &privKey, (void *)cc))
                     {
                         ret.push_back(vch);
                     }
@@ -311,7 +311,7 @@ static bool SignStepCC(const BaseSignatureCreator& creator, const CScript& scrip
                 if (cc)
                 {
                     vector<unsigned char> vch;
-                    if (creator.CreateSig(vch, p.vKeys[0].GetID(), _CCPubKey(cc), consensusBranchId, &privKey, (void *)cc))
+                    if (creator.CreateSig(vch, p.vKeys[0].GetID(), _CCPubKey(cc), consensusBranchId, scriptFlags, &privKey, (void *)cc))
                     {
                         ret.push_back(vch);
                     }
@@ -336,7 +336,7 @@ static bool SignStepCC(const BaseSignatureCreator& creator, const CScript& scrip
  * Returns false if scriptPubKey could not be completely satisfied.
  */
 static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptPubKey,
-                     std::vector<valtype>& ret, txnouttype& whichTypeRet, uint32_t consensusBranchId)
+                     std::vector<valtype>& ret, txnouttype& whichTypeRet, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     CScript scriptRet;
     uint160 h160;
@@ -371,10 +371,10 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
             return false;
         case TX_PUBKEY:
             keyID = CPubKey(vSolutions[0]).GetID();
-            return Sign1(keyID, creator, scriptPubKey, ret, consensusBranchId);
+            return Sign1(keyID, creator, scriptPubKey, ret, consensusBranchId, scriptFlags);
         case TX_PUBKEYHASH:
             keyID = CKeyID(uint160(vSolutions[0]));
-            if (!Sign1(keyID, creator, scriptPubKey, ret, consensusBranchId))
+            if (!Sign1(keyID, creator, scriptPubKey, ret, consensusBranchId, scriptFlags))
             {
                 LogPrintf("sign1 error\n");
                 return false;
@@ -397,11 +397,11 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
             return false;
             
         case TX_CRYPTOCONDITION:
-            return SignStepCC(creator, scriptPubKey, vSolutions, ret, consensusBranchId);
+            return SignStepCC(creator, scriptPubKey, vSolutions, ret, consensusBranchId, scriptFlags);
             
         case TX_MULTISIG:
             ret.push_back(valtype()); // workaround CHECKMULTISIG bug
-            return (SignN(vSolutions, creator, scriptPubKey, ret, consensusBranchId));
+            return (SignN(vSolutions, creator, scriptPubKey, ret, consensusBranchId, scriptFlags));
             
         default:
             return false;
@@ -423,13 +423,13 @@ static CScript PushAll(const vector<valtype>& values)
     return result;
 }
 
-bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& fromPubKey, SignatureData& sigdata, uint32_t consensusBranchId)
+bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& fromPubKey, SignatureData& sigdata, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     CScript script = fromPubKey;
     bool solved = true;
     std::vector<valtype> result;
     txnouttype whichType;
-    solved = SignStep(creator, script, result, whichType, consensusBranchId);
+    solved = SignStep(creator, script, result, whichType, consensusBranchId, scriptFlags);
     CScript subscript;
     
     if (solved && whichType == TX_SCRIPTHASH)
@@ -438,14 +438,13 @@ bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& fromPu
         // the final scriptSig is the signatures from that
         // and then the serialized subscript:
         script = subscript = CScript(result[0].begin(), result[0].end());
-        solved = solved && SignStep(creator, script, result, whichType, consensusBranchId) && whichType != TX_SCRIPTHASH;
+        solved = solved && SignStep(creator, script, result, whichType, consensusBranchId, scriptFlags) && whichType != TX_SCRIPTHASH;
         result.push_back(std::vector<unsigned char>(subscript.begin(), subscript.end()));
     }
     
     sigdata.scriptSig = PushAll(result);
     // Test solution
-    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
-    return solved && VerifyScript(sigdata.scriptSig, fromPubKey, flags, creator.Checker(), consensusBranchId);
+    return solved && VerifyScript(sigdata.scriptSig, fromPubKey, scriptFlags, creator.Checker(), consensusBranchId);
 }
 
 SignatureData DataFromTransaction(const CMutableTransaction& tx, unsigned int nIn)
@@ -469,7 +468,8 @@ bool SignSignature(
                    unsigned int nIn,
                    const CAmount& amount,
                    int nHashType,
-                   uint32_t consensusBranchId)
+                   uint32_t consensusBranchId,
+                   uint32_t scriptFlags)
 {
     assert(nIn < txTo.vin.size());
     
@@ -477,7 +477,7 @@ bool SignSignature(
     TransactionSignatureCreator creator(&keystore, &txToConst, nIn, amount, nHashType);
     
     SignatureData sigdata;
-    bool ret = ProduceSignature(creator, fromPubKey, sigdata, consensusBranchId);
+    bool ret = ProduceSignature(creator, fromPubKey, sigdata, consensusBranchId, scriptFlags);
     UpdateTransaction(txTo, nIn, sigdata);
     return ret;
 }
@@ -488,19 +488,20 @@ bool SignSignature(
                    CMutableTransaction& txTo,
                    unsigned int nIn,
                    int nHashType,
-                   uint32_t consensusBranchId)
+                   uint32_t consensusBranchId,
+                   uint32_t scriptFlags)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
     assert(txin.prevout.n < txFrom.vout.size());
     const CTxOut& txout = txFrom.vout[txin.prevout.n];
     
-    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, txout.nValue, nHashType, consensusBranchId);
+    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, txout.nValue, nHashType, consensusBranchId, scriptFlags);
 }
 
 static vector<valtype> CombineMultisig(const CScript& scriptPubKey, const BaseSignatureChecker& checker,
                                        const vector<valtype>& vSolutions,
-                                       const vector<valtype>& sigs1, const vector<valtype>& sigs2, uint32_t consensusBranchId)
+                                       const vector<valtype>& sigs1, const vector<valtype>& sigs2, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     // Combine all the signatures we've got:
     set<valtype> allsigs;
@@ -528,7 +529,7 @@ static vector<valtype> CombineMultisig(const CScript& scriptPubKey, const BaseSi
             if (sigs.count(pubkey))
                 continue; // Already got a sig for this pubkey
             
-            if (checker.CheckSig(sig, pubkey, scriptPubKey, consensusBranchId))
+            if (checker.CheckSig(sig, pubkey, scriptPubKey, consensusBranchId, scriptFlags))
             {
                 sigs[pubkey] = sig;
                 break;
@@ -575,7 +576,7 @@ namespace
 
 static Stacks CombineSignatures(const CScript& scriptPubKey, const BaseSignatureChecker& checker,
                                 const txnouttype txType, const vector<valtype>& vSolutions,
-                                Stacks sigs1, Stacks sigs2, uint32_t consensusBranchId)
+                                Stacks sigs1, Stacks sigs2, uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     switch (txType)
     {
@@ -608,12 +609,12 @@ static Stacks CombineSignatures(const CScript& scriptPubKey, const BaseSignature
                 Solver(pubKey2, txType2, vSolutions2);
                 sigs1.script.pop_back();
                 sigs2.script.pop_back();
-                Stacks result = CombineSignatures(pubKey2, checker, txType2, vSolutions2, sigs1, sigs2, consensusBranchId);
+                Stacks result = CombineSignatures(pubKey2, checker, txType2, vSolutions2, sigs1, sigs2, consensusBranchId, scriptFlags);
                 result.script.push_back(spk);
                 return result;
             }
         case TX_MULTISIG:
-            return Stacks(CombineMultisig(scriptPubKey, checker, vSolutions, sigs1.script, sigs2.script, consensusBranchId));
+            return Stacks(CombineMultisig(scriptPubKey, checker, vSolutions, sigs1.script, sigs2.script, consensusBranchId, scriptFlags));
         default:
             return Stacks();
     }
@@ -621,7 +622,7 @@ static Stacks CombineSignatures(const CScript& scriptPubKey, const BaseSignature
 
 SignatureData CombineSignatures(const CScript& scriptPubKey, const BaseSignatureChecker& checker,
                                 const SignatureData& scriptSig1, const SignatureData& scriptSig2,
-                                uint32_t consensusBranchId)
+                                uint32_t consensusBranchId, uint32_t scriptFlags)
 {
     txnouttype txType;
     vector<vector<unsigned char> > vSolutions;
@@ -631,7 +632,7 @@ SignatureData CombineSignatures(const CScript& scriptPubKey, const BaseSignature
                              scriptPubKey, checker, txType, vSolutions,
                              Stacks(scriptSig1, consensusBranchId),
                              Stacks(scriptSig2, consensusBranchId),
-                             consensusBranchId).Output();
+                             consensusBranchId, scriptFlags).Output();
 }
 
 namespace {
@@ -645,7 +646,8 @@ namespace {
                       const std::vector<unsigned char>& scriptSig,
                       const std::vector<unsigned char>& vchPubKey,
                       const CScript& scriptCode,
-                      uint32_t consensusBranchId) const
+                      uint32_t consensusBranchId,
+                      uint32_t flags) const
         {
             return true;
         }
@@ -662,7 +664,8 @@ bool DummySignatureCreator::CreateSig(
                                       std::vector<unsigned char>& vchSig,
                                       const CKeyID& keyid,
                                       const CScript& scriptCode,
-                                      uint32_t consensusBranchId, 
+                                      uint32_t consensusBranchId,
+                                      uint32_t scriptFlags,
                                       CKey *key,
                                       void *extraData) const
 {

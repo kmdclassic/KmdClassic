@@ -201,7 +201,8 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle, uint32_t co
         // Empty output script.
         CScript scriptCode;
         CTransaction signTx(tx);
-        uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
+        // SignatureHash with flags=0: non-script context (JoinSplit signatures)
+        uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId, 0);
 
         assert(crypto_sign_detached(&tx.joinSplitSig[0], NULL,
                                     dataToBeSigned.begin(), 32,
@@ -237,7 +238,8 @@ BOOST_AUTO_TEST_CASE(sighash_test)
 
         uint256 sh, sho;
         sho = SignatureHashOld(scriptCode, txTo, nIn, nHashType);
-        sh = SignatureHash(scriptCode, txTo, nIn, nHashType, 0, consensusBranchId);
+        // SignatureHash with flags=0: test context (flags not used in this test)
+        sh = SignatureHash(scriptCode, txTo, nIn, nHashType, 0, consensusBranchId, 0);
         #if defined(PRINT_SIGHASH_JSON)
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
         ss << txTo;
@@ -328,7 +330,8 @@ BOOST_AUTO_TEST_CASE(sighash_from_data)
           continue;
         }
 
-        sh = SignatureHash(scriptCode, tx, nIn, nHashType, 0, consensusBranchId);
+        // SignatureHash with flags=0: test context (flags not used in this test)
+        sh = SignatureHash(scriptCode, tx, nIn, nHashType, 0, consensusBranchId, 0);
         BOOST_CHECK_MESSAGE(sh.GetHex() == sigHashHex, strTest);
     }
 }

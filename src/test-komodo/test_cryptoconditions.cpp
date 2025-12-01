@@ -18,7 +18,7 @@ public:
     void CCSign(CMutableTransaction &tx, CC *cond) {
         tx.vin.resize(1);
         PrecomputedTransactionData txdata(tx);
-        uint256 sighash = SignatureHash(CCPubKey(cond), tx, 0, SIGHASH_ALL, 0, 0, &txdata);
+        uint256 sighash = SignatureHash(CCPubKey(cond), tx, 0, SIGHASH_ALL, 0, 0, 0, &txdata);
 
         int out = cc_signTreeSecp256k1Msg32(cond, notaryKey.begin(), sighash.begin());
         tx.vin[0].scriptSig = CCSig(cond);

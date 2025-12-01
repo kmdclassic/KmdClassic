@@ -548,16 +548,16 @@ static void MutateTxSign(CMutableTransaction& tx, const std::string& strInput)
         const CAmount& amount = coins->vout[txin.prevout.n].nValue;
 
         SignatureData sigdata;
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
         // Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mergedTx.vout.size()))
-            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mergedTx, i, amount, nHashType), prevPubKey, sigdata, consensusBranchId);
+            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mergedTx, i, amount, nHashType), prevPubKey, sigdata, consensusBranchId, flags);
 
         // ... and merge in other signatures:
         BOOST_FOREACH(const CTransaction& txv, txVariants)
-            sigdata = CombineSignatures(prevPubKey, MutableTransactionSignatureChecker(&mergedTx, i, amount), sigdata, DataFromTransaction(txv, i), consensusBranchId);
+            sigdata = CombineSignatures(prevPubKey, MutableTransactionSignatureChecker(&mergedTx, i, amount), sigdata, DataFromTransaction(txv, i), consensusBranchId, flags);
         UpdateTransaction(mergedTx, i, sigdata);
 
-        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
         if (!VerifyScript(txin.scriptSig, prevPubKey, flags, MutableTransactionSignatureChecker(&mergedTx, i, amount), consensusBranchId))
             fComplete = false;
     }

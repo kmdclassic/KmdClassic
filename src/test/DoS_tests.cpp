@@ -156,7 +156,8 @@ BOOST_DATA_TEST_CASE(DoS_mapOrphans, boost::unit_test::data::xrange(static_cast<
         tx.vout.resize(1);
         tx.vout[0].nValue = 1*CENT;
         tx.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
-        SignSignature(keystore, txPrev, tx, 0, SIGHASH_ALL, consensusBranchId);
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        SignSignature(keystore, txPrev, tx, 0, SIGHASH_ALL, consensusBranchId, flags);
 
         AddOrphanTx(tx, i);
     }
@@ -176,7 +177,8 @@ BOOST_DATA_TEST_CASE(DoS_mapOrphans, boost::unit_test::data::xrange(static_cast<
             tx.vin[j].prevout.n = j;
             tx.vin[j].prevout.hash = txPrev.GetHash();
         }
-        SignSignature(keystore, txPrev, tx, 0, SIGHASH_ALL, consensusBranchId);
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        SignSignature(keystore, txPrev, tx, 0, SIGHASH_ALL, consensusBranchId, flags);
         // Re-use same signature for other inputs
         // (they don't have to be valid for this test)
         for (unsigned int j = 1; j < tx.vin.size(); j++)

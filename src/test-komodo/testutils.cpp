@@ -113,7 +113,8 @@ CMutableTransaction spendTx(const CTransaction &txIn, int nOut)
 
 std::vector<uint8_t> getSig(const CMutableTransaction mtx, CScript inputPubKey, int nIn)
 {
-    uint256 hash = SignatureHash(inputPubKey, mtx, nIn, SIGHASH_ALL, 0, 0);
+    // SignatureHash with flags=0: test context (flags not used in this test)
+    uint256 hash = SignatureHash(inputPubKey, mtx, nIn, SIGHASH_ALL, 0, 0, 0);
     std::vector<uint8_t> vchSig;
     notaryKey.Sign(hash, vchSig);
     vchSig.push_back((unsigned char)SIGHASH_ALL);
@@ -135,7 +136,8 @@ void getInputTx(CScript scriptPubKey, CTransaction &txIn)
     // Create tx
     auto mtx = spendTx(coinbase);
     mtx.vout[0].scriptPubKey = scriptPubKey;
-    uint256 hash = SignatureHash(coinbase.vout[0].scriptPubKey, mtx, 0, SIGHASH_ALL, 0, 0);
+    // SignatureHash with flags=0: test context (flags not used in this test)
+    uint256 hash = SignatureHash(coinbase.vout[0].scriptPubKey, mtx, 0, SIGHASH_ALL, 0, 0, 0);
     std::vector<unsigned char> vchSig;
     notaryKey.Sign(hash, vchSig);
     vchSig.push_back((unsigned char)SIGHASH_ALL);

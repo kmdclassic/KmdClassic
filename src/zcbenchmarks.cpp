@@ -239,8 +239,9 @@ double benchmark_large_tx(size_t nInputs)
 
     // Sign for all the inputs
     auto consensusBranchId = NetworkUpgradeInfo[Consensus::UPGRADE_SAPLING].nBranchId;
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
     for (size_t i = 0; i < nInputs; i++) {
-        SignSignature(tempKeystore, prevPubKey, spending_tx, i, 1000000, SIGHASH_ALL, consensusBranchId);
+        SignSignature(tempKeystore, prevPubKey, spending_tx, i, 1000000, SIGHASH_ALL, consensusBranchId, flags);
     }
 
     // Spending tx has all its inputs signed and does not need to be mutated anymore
@@ -250,7 +251,6 @@ double benchmark_large_tx(size_t nInputs)
     struct timeval tv_start;
     timer_start(tv_start);
     PrecomputedTransactionData txdata(final_spending_tx);
-    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
     for (size_t i = 0; i < nInputs; i++) {
         ScriptError serror = SCRIPT_ERR_OK;
         assert(VerifyScript(final_spending_tx.vin[i].scriptSig,

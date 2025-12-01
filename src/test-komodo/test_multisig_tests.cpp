@@ -15,7 +15,8 @@ namespace TestMultiSigTests {
 
     CScript sign_multisig(CScript scriptPubKey, std::vector<CKey> keys, CTransaction transaction, int whichIn, uint32_t consensusBranchId)
     {
-        uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, SIGHASH_ALL, 0, consensusBranchId);
+        // SignatureHash with flags=0: test context (flags not used in this test)
+        uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, SIGHASH_ALL, 0, consensusBranchId, 0);
 
         CScript result;
         result << OP_0; // CHECKMULTISIG bug workaround
@@ -228,9 +229,10 @@ namespace TestMultiSigTests {
                 txTo[i].vout[0].nValue = 1;
             }
 
+            uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
             for (int i = 0; i < 3; i++)
             {
-                ASSERT_TRUE(SignSignature(keystore, txFrom, txTo[i], 0, SIGHASH_ALL, consensusBranchId)) << strprintf("SignSignature %d", i);
+                ASSERT_TRUE(SignSignature(keystore, txFrom, txTo[i], 0, SIGHASH_ALL, consensusBranchId, flags)) << strprintf("SignSignature %d", i);
             }
 
         }

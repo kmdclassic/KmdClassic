@@ -856,7 +856,7 @@ bool EvalScript(
                         //serror is set
                         return false;
                     }
-                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, script, consensusBranchId);
+                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, script, consensusBranchId, flags);
 
                     // comment below when not debugging
                     //LogPrintf("OP_CHECKSIG: scriptSig.%s\nscriptPubKey.%s\nbranchid.%x, success: %s\n", 
@@ -918,7 +918,7 @@ bool EvalScript(
                         }
 
                         // Check signature
-                        bool fOk = checker.CheckSig(vchSig, vchPubKey, script, consensusBranchId);
+                        bool fOk = checker.CheckSig(vchSig, vchPubKey, script, consensusBranchId, flags);
 
                         if (fOk) {
                             isig++;
@@ -972,7 +972,7 @@ bool EvalScript(
                     if (stack.size() < 2)
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
                     //LogPrintf("check cryptocondition\n");
-                    int fResult = checker.CheckCryptoCondition(stacktop(-1), stacktop(-2), script, consensusBranchId);
+                    int fResult = checker.CheckCryptoCondition(stacktop(-1), stacktop(-2), script, consensusBranchId, flags);
                     if (fResult == -1) {
                         return set_error(serror, SCRIPT_ERR_CRYPTOCONDITION_INVALID_FULFILLMENT);
                     }
@@ -1222,6 +1222,7 @@ uint256 SignatureHash(
     int nHashType,
     const CAmount& amount,
     uint32_t consensusBranchId,
+    uint32_t flags,
     const PrecomputedTransactionData* cache)
 {
     if (nIn >= txTo.vin.size() && nIn != NOT_AN_INPUT) {
@@ -1343,7 +1344,8 @@ bool TransactionSignatureChecker::CheckSig(
     const vector<unsigned char>& vchSigIn,
     const vector<unsigned char>& vchPubKey,
     const CScript& scriptCode,
-    uint32_t consensusBranchId) const
+    uint32_t consensusBranchId,
+    uint32_t flags) const
 {
     CPubKey pubkey(vchPubKey);
     if (!pubkey.IsValid())
@@ -1358,7 +1360,7 @@ bool TransactionSignatureChecker::CheckSig(
 
     uint256 sighash;
     try {
-        sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, consensusBranchId, this->txdata);
+        sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, consensusBranchId, flags, this->txdata);
     } catch (logic_error ex) {
         return false;
     }
@@ -1374,7 +1376,8 @@ int TransactionSignatureChecker::CheckCryptoCondition(
         const std::vector<unsigned char>& condBin,
         const std::vector<unsigned char>& ffillBin,
         const CScript& scriptCode,
-        uint32_t consensusBranchId) const
+        uint32_t consensusBranchId,
+        uint32_t flags) const
 {
     // Hash type is one byte tacked on to the end of the fulfillment
     if (ffillBin.empty())
@@ -1390,7 +1393,7 @@ int TransactionSignatureChecker::CheckCryptoCondition(
     uint256 sighash;
     int nHashType = ffillBin.back();
     try {
-        sighash = SignatureHash(CCPubKey(cond), *txTo, nIn, nHashType, amount, consensusBranchId, this->txdata);
+        sighash = SignatureHash(CCPubKey(cond), *txTo, nIn, nHashType, amount, consensusBranchId, flags, this->txdata);
     } catch (logic_error ex) {
         return 0;
     }

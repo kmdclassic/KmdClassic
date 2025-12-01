@@ -255,7 +255,8 @@ bool NSPV_SignTx(CMutableTransaction &mtx,int32_t vini,int64_t utxovalue,const C
         LogPrintf("use legacy sig validation\n");
         branchid = 0;
     }
-    if ( ProduceSignature(TransactionSignatureCreator(&keystore,&txNewConst,vini,utxovalue,SIGHASH_ALL),scriptPubKey,sigdata,branchid) != 0 )
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+    if ( ProduceSignature(TransactionSignatureCreator(&keystore,&txNewConst,vini,utxovalue,SIGHASH_ALL),scriptPubKey,sigdata,branchid,flags) != 0 )
     {
         UpdateTransaction(mtx,vini,sigdata);
         LogPrintf("SIG_TXHASH %s vini.%d %.8f\n",SIG_TXHASH.GetHex().c_str(),vini,(double)utxovalue/COIN);

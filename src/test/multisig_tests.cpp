@@ -30,7 +30,8 @@ BOOST_FIXTURE_TEST_SUITE(multisig_tests, BasicTestingSetup)
 CScript
 sign_multisig(CScript scriptPubKey, vector<CKey> keys, CTransaction transaction, int whichIn, uint32_t consensusBranchId)
 {
-    uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, SIGHASH_ALL, 0, consensusBranchId);
+    // SignatureHash with flags=0: test context (flags not used in this test)
+    uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, SIGHASH_ALL, 0, consensusBranchId, 0);
 
     CScript result;
     result << OP_0; // CHECKMULTISIG bug workaround
@@ -318,9 +319,10 @@ BOOST_DATA_TEST_CASE(multisig_Sign, boost::unit_test::data::xrange(static_cast<i
         txTo[i].vout[0].nValue = 1;
     }
 
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
     for (int i = 0; i < 3; i++)
     {
-        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom, txTo[i], 0, SIGHASH_ALL, consensusBranchId), strprintf("SignSignature %d", i));
+        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom, txTo[i], 0, SIGHASH_ALL, consensusBranchId, flags), strprintf("SignSignature %d", i));
     }
 }
 

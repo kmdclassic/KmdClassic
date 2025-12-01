@@ -83,7 +83,8 @@ void CreateJoinSplitSignature(CMutableTransaction& mtx, uint32_t consensusBranch
     // Empty output script.
     CScript scriptCode;
     CTransaction signTx(mtx);
-    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
+    // SignatureHash with flags=0: non-script context (JoinSplit signatures)
+    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId, 0);
     if (dataToBeSigned == one) {
         throw std::runtime_error("SignatureHash failed");
     }
