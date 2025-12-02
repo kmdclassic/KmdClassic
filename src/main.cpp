@@ -2471,13 +2471,19 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex,bool checkPOW)
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
+    assert(nS8HardforkHeight < KMD_DORMANCY_ACTIVATION_HEIGHT);
     if (chainName.isKMD()) {
         if (nHeight == 1)
             return 100000000 * COIN; // ICO allocation
         else if (nHeight < nS8HardforkHeight)
             return 3 * COIN;
-        else
-            return COIN; // KIP-0002, https://github.com/KomodoPlatform/kips/blob/main/kips/kip-0002.mediawiki
+        else {
+            bool dormancyActive = NetworkUpgradeActive(nHeight, consensusParams, Consensus::UPGRADE_DORMANCY);
+            if (!dormancyActive) {
+                return COIN; // KIP-0002, https://github.com/KomodoPlatform/kips/blob/main/kips/kip-0002.mediawiki
+            }
+            return 3 * COIN; // Dormancy rules apply
+        }
     } else {
         return komodo_ac_block_subsidy(nHeight);
     }
