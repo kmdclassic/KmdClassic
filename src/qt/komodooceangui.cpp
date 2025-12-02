@@ -61,8 +61,10 @@
 #if QT_VERSION < 0x050000
 #include <QTextDocument>
 #include <QUrl>
+#include <QDesktopServices>
 #else
 #include <QUrlQuery>
+#include <QDesktopServices>
 #endif
 
 const std::string KomodoOceanGUI::DEFAULT_UIPLATFORM =
@@ -409,12 +411,17 @@ void KomodoOceanGUI::createActions()
     m_mask_values_action->setStatusTip(tr("Mask the values in the Overview tab"));
     m_mask_values_action->setCheckable(true);
 
+    openWebsiteAction = new QAction(tr("&Website"), this);
+    openWebsiteAction->setStatusTip(tr("Open the %1 website").arg(tr(PACKAGE_NAME)));
+    openWebsiteAction->setMenuRole(QAction::NoRole);
+
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
     connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
+    connect(openWebsiteAction, SIGNAL(triggered()), this, SLOT(openWebsiteClicked()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
@@ -477,6 +484,9 @@ void KomodoOceanGUI::createMenuBar()
     settings->addAction(optionsAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
+
+    help->addAction(openWebsiteAction);
+    help->addSeparator();
     if(walletFrame)
     {
         help->addAction(openRPCConsoleAction);
@@ -719,6 +729,11 @@ void KomodoOceanGUI::showDebugWindowActivateConsole()
 void KomodoOceanGUI::showHelpMessageClicked()
 {
     helpMessageDialog->show();
+}
+
+void KomodoOceanGUI::openWebsiteClicked()
+{
+    QDesktopServices::openUrl(QUrl("https://kmdclassic.com/"));
 }
 
 #ifdef ENABLE_WALLET
