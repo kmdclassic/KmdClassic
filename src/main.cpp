@@ -1573,11 +1573,19 @@ bool CheckTransactionWithoutProofVerification(uint32_t tiptime,const CTransactio
         return state.DoS(100, error("CheckTransaction(): tx.valueBalance has no sources or sinks"),
                             REJECT_INVALID, "bad-txns-valuebalance-nonzero");
     }
+    // Sapling Shielded Spend or Output are not allowed on public chains.
     if ( acpublic != 0 && (tx.vShieldedSpend.empty() == 0 || tx.vShieldedOutput.empty() == 0) )
     {
         return state.DoS(100, error("CheckTransaction(): this is a public chain, no sapling allowed"),
                          REJECT_INVALID, "bad-txns-acpublic-chain");
     }
+    // TODO: KMDCL is private chain again, i.e. acpublic flag is set to 0, so we allow
+    // Sapling Shielded Spend or Output on KMDCL. But as in a fact the shielded transactions
+    // were forbidden after KOMODO_SAPLING_DEADLINE - we should have another contextual check
+    // for transactions to ensure that from last known shielded transaction in KMD blockchain
+    // till the Dormancy activation height no shielded transactions are allowed. It should be
+    // consensus rule.
+
     if ( ASSETCHAINS_PRIVATE != 0 && invalid_private_taddr != 0 && tx.vShieldedSpend.empty() == 0 )
     {
         if ( !( current_season > 5 &&
