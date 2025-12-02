@@ -21,7 +21,9 @@
  ******************************************************************************/
 
 #include "main.h"
+#include "assetchain.h"
 #include "consensus/consensus.h"
+#include "consensus/params.h"
 #include "sodium.h"
 #include "consensus/merkle.h"
 
@@ -1194,6 +1196,21 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
     bool saplingActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_SAPLING);
     bool isSprout = !overwinterActive;
     bool dormancyActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_DORMANCY);
+
+    const std::string networkID = Params().NetworkIDString();
+    if (chainName.isKMD() && networkID == "main" && !dormancyActive) {
+        // We shouldn't have any shielded transactions after Block #1226869 and before
+        // Dormancy activation height. The last shielded transaction in KMD blockchain was 
+        // at block #1226868 - https://kmdexplorer.io/tx/68afdb7516a0c1711375792bb01a0bbe36de9f3dadb6091f619b23c80aff14f2
+        // After the KOMODO_SAPLING_DEADLINE consensus rule prevents any shielded transactions.
+        int ht = Params().GetConsensus().vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight;
+        if (nHeight >= 1226869 && nHeight < ht) {
+            if (!tx.vShieldedSpend.empty() || !tx.vShieldedOutput.empty() || tx.valueBalance != 0) {
+                return state.DoS(100, error("ContextualCheckTransaction(): shielded transactions are not allowed after Block #1226869 and before Dormancy activation height"),
+                                 REJECT_INVALID, "bad-txns-shielded-transactions-not-allowed");
+            }
+        }
+    }
 
     if (dormancyActive) {
         // TODO: Dormancy rules apply
