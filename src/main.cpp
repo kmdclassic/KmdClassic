@@ -2859,7 +2859,7 @@ bool ContextualCheckInputs(
                            CValidationState &state,
                            const CCoinsViewCache &inputs,
                            bool fScriptChecks,
-                           uint32_t flags,
+                           unsigned int flags,
                            bool cacheStore,
                            PrecomputedTransactionData& txdata,
                            const Consensus::Params& consensusParams,
