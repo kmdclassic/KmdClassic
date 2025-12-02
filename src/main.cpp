@@ -2478,8 +2478,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
         else if (nHeight < nS8HardforkHeight)
             return 3 * COIN;
         else {
-            bool dormancyActive = NetworkUpgradeActive(nHeight, consensusParams, Consensus::UPGRADE_DORMANCY);
-            if (!dormancyActive) {
+            if (nHeight < KMD_DORMANCY_ACTIVATION_HEIGHT) {
                 return COIN; // KIP-0002, https://github.com/KomodoPlatform/kips/blob/main/kips/kip-0002.mediawiki
             }
             return 3 * COIN; // Dormancy rules apply
