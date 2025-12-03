@@ -28,7 +28,8 @@
 
 #define KOMODO_MINDIFF_NBITS 0x200f0f0f
 #define KMD_SAPLING_ACTIVATION_HEIGHT 1140409
-#define KMD_DORMANCY_ACTIVATION_HEIGHT 5000000
+// 3 days from noon of 3 Dec 2025, so planned on 6 Dec 2025
+#define KMD_DORMANCY_ACTIVATION_HEIGHT 4729146 
 
 #include <vector>
 
