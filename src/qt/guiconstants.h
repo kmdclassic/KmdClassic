@@ -47,8 +47,8 @@ static const int MAX_URI_LENGTH = 255;
 #define SPINNER_FRAMES 36
 
 #define QAPP_ORG_NAME "KmdClassic"
-#define QAPP_ORG_DOMAIN "komodo.org"
-#define QAPP_APP_NAME_DEFAULT "KomodoOceanGUI"
-#define QAPP_APP_NAME_TESTNET "KomodoOceanGUI-testnet"
+#define QAPP_ORG_DOMAIN "kmdclassic.com"
+#define QAPP_APP_NAME_DEFAULT "KmdClassicGUI"
+#define QAPP_APP_NAME_TESTNET "KmdClassicGUI-testnet"
 
 #endif // KOMODO_QT_GUICONSTANTS_H
