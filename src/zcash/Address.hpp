@@ -225,6 +225,7 @@ typedef boost::variant<InvalidEncoding, SproutViewingKey, SaplingIncomingViewing
 
 /** Check whether a PaymentAddress is not an InvalidEncoding. */
 extern const uint32_t SAPLING_BRANCH_ID;
+extern const uint32_t DORMANCY_BRANCH_ID;
 bool IsValidPaymentAddress(const libzcash::PaymentAddress& zaddr, uint32_t consensusBranchId = SAPLING_BRANCH_ID);
 
 /** Check whether a ViewingKey is not an InvalidEncoding. */
