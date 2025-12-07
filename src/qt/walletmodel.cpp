@@ -443,8 +443,6 @@ WalletModel::SendCoinsReturn WalletModel::prepareZTransaction(WalletModelZTransa
                     if ( fromSprout || toSprout )
                         return SproutUsageExpired;
                 }
-                if ( toSapling && chainName.isKMD() )
-                    return SproutUsageWillExpireSoon;
 
                 // If we are sending from a shielded address, all recipient
                 // shielded addresses must be of the same type.
