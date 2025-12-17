@@ -28,7 +28,12 @@
 
 #define KOMODO_MINDIFF_NBITS 0x200f0f0f
 #define KMD_SAPLING_ACTIVATION_HEIGHT 1140409
-#define KMD_DORMANCY_ACTIVATION_HEIGHT 5000000
+// This reflects the changes that KMD (GLEEC) implemented in their autocheckpoints
+// PR#670 - https://github.com/GLEECBTC/komodo-daemon/pull/670. As of that date,
+// dPoW will be sunset in KMD and replaced by a new consensus mechanism called
+// "autocheckpoints". We decided to activate our Dormancy HF at the same height. 
+#define KMD_DORMANCY_ACTIVATION_HEIGHT 4771595 // Approx Jan 05 2025
+
 
 #include <vector>
 
