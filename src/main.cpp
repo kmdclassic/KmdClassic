@@ -3497,6 +3497,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         return true;
     }
 
+    // TODO: fScriptChecks unused here, instead we are using fExpensiveChecks further ... 
     bool fScriptChecks = (!fCheckpointsEnabled || pindex->nHeight >= Checkpoints::GetTotalBlocksEstimate(chainparams.Checkpoints()));
     //if ( KOMODO_TESTNET_EXPIRATION != 0 && pindex->nHeight > KOMODO_TESTNET_EXPIRATION ) // "testnet"
     //    return(false);
@@ -8118,30 +8119,19 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             return true;
         }
 
+        // If we already know the last header in the message, then it contains
+        // no new information for us.  In this case, we do not request
+        // more headers later.  This prevents multiple chains of redundant
+        // getheader requests from running in parallel if triggered by incoming
+        // blocks while the node is still in initial headers sync.
+        //
+        // (Allow disabling optimization in case there are unexpected problems.)
         bool hasNewHeaders = true;
-
-        // only KMD have checkpoints in sources, so, using IsInitialBlockDownload() here is
-        // not applicable for assetchains (!)
-        if (GetBoolArg("-fixibd", false) && chainName.isKMD() && IsInitialBlockDownload()) {
-
-            /**
-             * This is experimental feature avaliable only for KMD during initial block download running with
-             * -fixibd arg. Fix was offered by domob1812 here:
-             * https://github.com/bitcoin/bitcoin/pull/8054/files#diff-7ec3c68a81efff79b6ca22ac1f1eabbaR5099
-             * but later it was reverted bcz of synchronization stuck issues.
-             * Explanation:
-             * https://github.com/bitcoin/bitcoin/pull/8306#issuecomment-231584578
-             * Limiting this fix only to IBD and with special command line arg makes it safe, bcz
-             * default behaviour is to request new headers anyway.
-            */
-
-            // If we already know the last header in the message, then it contains
-            // no new information for us.  In this case, we do not request
-            // more headers later.  This prevents multiple chains of redundant
-            // getheader requests from running in parallel if triggered by incoming
-            // blocks while the node is still in initial headers sync.
+        if (GetBoolArg("-optimize-getheaders", true) && IsInitialBlockDownload()) {
             hasNewHeaders = (mapBlockIndex.count(headers.back().GetHash()) == 0);
         }
+        // https://github.com/bitcoin/bitcoin/pull/8054/files#diff-7ec3c68a81efff79b6ca22ac1f1eabbaR5099
+        // https://github.com/bitcoin/bitcoin/pull/8306#issuecomment-231584578
 
         CBlockIndex *pindexLast = NULL;
         BOOST_FOREACH(const CBlockHeader& header, headers) {
@@ -8168,13 +8158,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindexLast)
             UpdateBlockAvailability(pfrom->GetId(), pindexLast->GetBlockHash());
 
-        /* debug log */
-        // if (!hasNewHeaders && nCount == MAX_HEADERS_RESULTS && pindexLast) {
-        //         static int64_t bytes_saved;
-        //         bytes_saved += MAX_HEADERS_RESULTS * (CBlockHeader::HEADER_SIZE + 1348);
-        //         LogPrintf("[%d] don't request getheaders (%d) from peer=%d, bcz it's IBD and (%s) is already known!\n",
-        //             bytes_saved, pindexLast->nHeight, pfrom->id, headers.back().GetHash().ToString());
-        // }
+        // Temporary, until we're sure the optimization works
+        if (nCount == MAX_HEADERS_RESULTS && pindexLast && !hasNewHeaders) {
+            LogPrint("net", "NO more getheaders (%d) to send to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
+        } 
 
         if (nCount == MAX_HEADERS_RESULTS && pindexLast && hasNewHeaders) {
             // Headers message had its maximum size; the peer may have more headers.
