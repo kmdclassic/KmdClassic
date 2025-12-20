@@ -643,25 +643,6 @@ namespace LegacyEventsTests {
         ASSERT_TRUE(state_ptr != nullptr);
         ASSERT_TRUE(state_ptr->events.size() == 2);
 
-        // (1) Check signedmasks
-        fs::path fileSignedMasksPath = GetDataDir(false) / "signedmasks";
-        uintmax_t signedMasksFileSize = 0;
-        if (fs::exists(fileSignedMasksPath) && fs::is_regular_file(fileSignedMasksPath)) {
-            signedMasksFileSize = fs::file_size(fileSignedMasksPath);
-        }
-
-        std::vector<uint8_t> expectedBytes = { 0x45, 0x16, 0x02, 0x00, 0xb9, 0x01, 0x00, 0x41, 0x04, 0x02, 0x82, 0x80 };
-        ASSERT_TRUE(signedMasksFileSize == expectedBytes.size());
-        std::vector<uint8_t> sm_bytes(signedMasksFileSize);
-        std::ifstream file(fileSignedMasksPath.string(), std::ios::binary);
-        if (file) {
-            file.read((char *)sm_bytes.data(), signedMasksFileSize);
-            file.close();
-        } else {
-            ASSERT_TRUE(false) << "Failed to open signedmasks file ...";
-        }
-        ASSERT_TRUE(expectedBytes == sm_bytes);
-
         // (2) Check events count
         std::map<komodo::komodo_event_type, int> eventCounter;
         for (const std::shared_ptr<komodo::event>& e : state_ptr->events) {

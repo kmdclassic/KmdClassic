@@ -53,3 +53,4 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
         uint64_t value,int32_t notarized,uint64_t signedmask,uint32_t timestamp);
 
 int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block);
+
