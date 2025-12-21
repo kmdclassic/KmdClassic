@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 echo "{\"files\":{$(
 find . -type f |  	# Get list of file paths
 grep -v $1 |		# Exclude Makefile hashes
