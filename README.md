@@ -24,7 +24,7 @@ Komodo Classic will restore and maintain the core features that made Komodo uniq
 
 - **Private Transactions**: KMDCL will include private transaction capabilities, restoring the privacy features that were part of the original Komodo vision.
 
-- **5% APR User Rewards (Interest)**: Just as it was in the original KMD, KMDCL will feature a 5% Annual Percentage Rate (APR) reward system for users, providing interest on holdings as originally intended by the creator.
+- **5% AUR - Active User Rewards**: Just as it was in the original KMD, KMDCL will feature a 5% AUR (Active User Rewards) reward system for users, providing rewards on holdings as originally intended by the creator.
 
 ## Technical Foundation
 
