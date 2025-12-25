@@ -39,11 +39,17 @@ bool KomodoUnits::valid(int unit)
 
 QString KomodoUnits::name(int unit)
 {
+    std::string chainNameStr = chainName.ToString();
+    if (chainNameStr == "KMD") {
+        chainNameStr = "KMDCL";
+    }
+    QString chainNameQStr = QString::fromStdString(chainNameStr);
+    
     switch(unit)
     {
-    case KMD: return QString(chainName.ToString().c_str());
-    case mKMD: return QString("m")+QString(chainName.ToString().c_str());
-    case uKMD: return QString::fromUtf8("μ")+QString(chainName.ToString().c_str());
+    case KMD: return chainNameQStr;
+    case mKMD: return QString("m") + chainNameQStr;
+    case uKMD: return QString::fromUtf8("μ") + chainNameQStr;
     default: return QString("???");
     }
 }

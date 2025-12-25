@@ -444,7 +444,8 @@ bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& fromPu
     
     sigdata.scriptSig = PushAll(result);
     // Test solution
-    return solved && VerifyScript(sigdata.scriptSig, fromPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, creator.Checker(), consensusBranchId);
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+    return solved && VerifyScript(sigdata.scriptSig, fromPubKey, flags, creator.Checker(), consensusBranchId);
 }
 
 SignatureData DataFromTransaction(const CMutableTransaction& tx, unsigned int nIn)

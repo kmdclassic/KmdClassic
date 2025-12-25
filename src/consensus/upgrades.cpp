@@ -18,6 +18,7 @@
  ******************************************************************************/
 
 #include "consensus/upgrades.h"
+#include "chain.h"
 #include "util.h"
 extern int32_t KOMODO_NSPV;
 #define NSPV_BRANCHID 0x76b809bb
@@ -50,6 +51,11 @@ const struct NUInfo NetworkUpgradeInfo[Consensus::MAX_NETWORK_UPGRADES] = {
         /*.nBranchId =*/ 0x76b809bb,
         /*.strName =*/ "Sapling",
         /*.strInfo =*/ "See https://z.cash/upgrade/sapling.html for details.",
+    },
+    {
+        /*.nBranchId =*/ 0x64726d6e,
+        /*.strName =*/ "Dormancy",
+        /*.strInfo =*/ "Dormancy network upgrade",
     }
 };
 
@@ -109,6 +115,18 @@ uint32_t CurrentEpochBranchId(int nHeight, const Consensus::Params& params)
     if ( KOMODO_NSPV_SUPERLITE )
         return(NSPV_BRANCHID);
     return NetworkUpgradeInfo[CurrentEpoch(nHeight, params)].nBranchId;
+}
+
+uint32_t PrevEpochBranchId(uint32_t currentBranchId, const Consensus::Params& params) {
+    if ( KOMODO_NSPV_SUPERLITE )
+        return(NSPV_BRANCHID); // prev of 0x76b809bb is 0x5ba81b19
+    for (int idx = Consensus::BASE_SPROUT + 1; idx < Consensus::MAX_NETWORK_UPGRADES; idx++) {
+        if (currentBranchId == NetworkUpgradeInfo[idx].nBranchId) {
+            return NetworkUpgradeInfo[idx - 1].nBranchId;
+        }
+    }
+    // Base case
+    return NetworkUpgradeInfo[Consensus::BASE_SPROUT].nBranchId;
 }
 
 bool IsConsensusBranchId(int branchId) {

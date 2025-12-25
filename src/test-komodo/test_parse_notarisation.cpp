@@ -49,6 +49,6 @@ TEST(TestParseNotarisation, test__b)
 
 
 
-// for l in `g 'parse notarisation' ~/.komodo/debug.log | pyline 'l.split()[8]'`; do hoek decodeTx '{"hex":"'`src/komodo-cli getrawtransaction "$l"`'"}' | jq '.outputs[1].script.op_return' | pyline 'import base64; print base64.b64decode(l).encode("hex")'; done
+// for l in `g 'parse notarisation' ~/.kmdclassic/debug.log | pyline 'l.split()[8]'`; do hoek decodeTx '{"hex":"'`src/kmdclassic-cli getrawtransaction "$l"`'"}' | jq '.outputs[1].script.op_return' | pyline 'import base64; print base64.b64decode(l).encode("hex")'; done
 
 }

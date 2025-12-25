@@ -2108,7 +2108,7 @@ int32_t komodo_acpublic(uint32_t tiptime)
             if ( (pindex= chainActive.Tip()) != 0 )
                 tiptime = pindex->nTime;
         }
-        if ( (chainName.isKMD() || chainName.isSymbol("ZEX")) && tiptime >= KOMODO_SAPLING_DEADLINE )
+        if ( chainName.isSymbol("ZEX") && tiptime >= KOMODO_SAPLING_DEADLINE )
             acpublic = 1;
     }
     return(acpublic);

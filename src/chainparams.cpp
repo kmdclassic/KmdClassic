@@ -134,6 +134,22 @@ public:
         consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nProtocolVersion = 170007;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nProtocolVersion = 170008;
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
+
+        // Set the Sapling and Overwinter activation heights for KMDCL, as it's already 
+        // known. This will allow us to skip call komodo_activate_sapling during LoadBlockIndexDB.
+        // Also komodo_activate_sapling called during ConnectTip() will be skipped.
+        if (chainName.isKMD()) {
+            // Here we can't call komodo_activate_sapling, so doing the same manually.
+            consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+            consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+            ASSETCHAINS_SAPLING = KMD_SAPLING_ACTIVATION_HEIGHT;
+            LogPrintf("%s: SET SAPLING ACTIVATION height.%d\n",__func__,KMD_SAPLING_ACTIVATION_HEIGHT);
+            consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = KMD_DORMANCY_ACTIVATION_HEIGHT;
+            LogPrintf("%s: SET DORMANCY ACTIVATION height.%d\n",__func__,KMD_DORMANCY_ACTIVATION_HEIGHT);
+            
+        }
 
         // The best chain should have at least this much work.
         // if (chainName.isKMD()) {
@@ -381,6 +397,8 @@ public:
         consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = 207500;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nProtocolVersion = 170007;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = 280000;
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nProtocolVersion = 170008;
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
 
         pchMessageStart[0] = 0x5A;
         pchMessageStart[1] = 0x1F;
@@ -474,6 +492,9 @@ public:
             Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nProtocolVersion = 170006;
         consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight =
+            Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nProtocolVersion = 170008;
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight =
             Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
         coinbaseMaturity = 1;
 

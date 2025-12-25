@@ -21,6 +21,9 @@
  ******************************************************************************/
 
 #include "main.h"
+#include "assetchain.h"
+#include "consensus/consensus.h"
+#include "consensus/params.h"
 #include "sodium.h"
 #include "consensus/merkle.h"
 
@@ -858,7 +861,9 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans) EXCLUSIVE_LOCKS_REQUIRE
     return nEvicted;
 }
 
-
+// Check for standard transaction types.
+// Called from AcceptToMemoryPool() to validate transactions before adding to mempool,
+// and in various test files (transaction_tests.cpp, script_P2SH_tests.cpp, etc.).
 bool IsStandardTx(const CTransaction& tx, string& reason, const int nHeight)
 {
     bool overwinterActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_OVERWINTER);
@@ -1190,6 +1195,26 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
     bool overwinterActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_OVERWINTER);
     bool saplingActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_SAPLING);
     bool isSprout = !overwinterActive;
+    bool dormancyActive = NetworkUpgradeActive(nHeight, Params().GetConsensus(), Consensus::UPGRADE_DORMANCY);
+
+    const std::string networkID = Params().NetworkIDString();
+    if (chainName.isKMD() && networkID == "main" && !dormancyActive) {
+        // We shouldn't have any shielded transactions after Block #1226869 and before
+        // Dormancy activation height. The last shielded transaction in KMD blockchain was 
+        // at block #1226868 - https://kmdexplorer.io/tx/68afdb7516a0c1711375792bb01a0bbe36de9f3dadb6091f619b23c80aff14f2
+        // After the KOMODO_SAPLING_DEADLINE consensus rule prevents any shielded transactions.
+        int ht = Params().GetConsensus().vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight;
+        if (nHeight >= 1226869 && nHeight < ht) {
+            if (!tx.vShieldedSpend.empty() || !tx.vShieldedOutput.empty() || tx.valueBalance != 0) {
+                return state.DoS(100, error("ContextualCheckTransaction(): shielded transactions are not allowed after Block #1226869 and before Dormancy activation height"),
+                                 REJECT_INVALID, "bad-txns-shielded-transactions-not-allowed");
+            }
+        }
+    }
+
+    if (dormancyActive) {
+        // TODO: Dormancy rules apply
+    }
 
     // If Sprout rules apply, reject transactions which are intended for Overwinter and beyond
     if (isSprout && tx.fOverwintered) {
@@ -1278,28 +1303,34 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
                             REJECT_INVALID, "bad-txns-oversize");
     }
 
+    auto consensusBranchId = CurrentEpochBranchId(nHeight, Params().GetConsensus());
+    auto prevConsensusBranchId = PrevEpochBranchId(consensusBranchId, Params().GetConsensus());
     uint256 dataToBeSigned;
+    uint256 prevDataToBeSigned;
 
     if (!tx.IsMint() &&
         (!tx.vjoinsplit.empty() ||
-         !tx.vShieldedSpend.empty() ||
-         !tx.vShieldedOutput.empty()))
+        !tx.vShieldedSpend.empty() ||
+        !tx.vShieldedOutput.empty()))
     {
-        auto consensusBranchId = CurrentEpochBranchId(nHeight, Params().GetConsensus());
         // Empty output script.
         CScript scriptCode;
         try {
             dataToBeSigned = SignatureHash(scriptCode, tx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
+            prevDataToBeSigned = SignatureHash(scriptCode, tx, NOT_AN_INPUT, SIGHASH_ALL, 0, prevConsensusBranchId);
         } catch (std::logic_error ex) {
+            // A logic error should never occur because we pass NOT_AN_INPUT and
+            // SIGHASH_ALL to SignatureHash().
             return state.DoS(100, error("CheckTransaction(): error computing signature hash"),
-                             REJECT_INVALID, "error-computing-signature-hash");
+                                REJECT_INVALID, "error-computing-signature-hash");
         }
-
     }
 
-    if (!(tx.IsMint() || tx.vjoinsplit.empty()))
+    
+    if (!tx.IsMint() && !tx.vjoinsplit.empty())
     {
         BOOST_STATIC_ASSERT(crypto_sign_PUBLICKEYBYTES == 32);
+        int dosLevelPotentiallyRelaxing = isInitBlockDownload() ? 0 : 10 /* DoS level set to 10 to be more forgiving */;
 
         // We rely on libsodium to check that the signature is canonical.
         // https://github.com/jedisct1/libsodium/commit/62911edb7ff2275cccd74bf1c8aefcc4d76924e0
@@ -1307,9 +1338,25 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
                                         dataToBeSigned.begin(), 32,
                                         tx.joinSplitPubKey.begin()
                                         ) != 0) {
-            return state.DoS(isInitBlockDownload() ? 0 : 100,
-                                error("CheckTransaction(): invalid joinsplit signature"),
-                                REJECT_INVALID, "bad-txns-invalid-joinsplit-signature");
+            // Check whether the failure was caused by an outdated consensus
+            // branch ID; if so, inform the node that they need to upgrade. We
+            // only check the previous epoch's branch ID, on the assumption that
+            // users creating transactions will notice their transactions
+            // failing before a second network upgrade occurs.
+            if (crypto_sign_verify_detached(&tx.joinSplitSig[0],
+                                            prevDataToBeSigned.begin(), 32,
+                                            tx.joinSplitPubKey.begin()
+                                            ) == 0) {
+                return state.DoS(
+                    dosLevelPotentiallyRelaxing, false, REJECT_INVALID, strprintf(
+                        "old-consensus-branch-id (Expected %s, found %s)",
+                        HexInt(consensusBranchId),
+                        HexInt(prevConsensusBranchId)));
+            }
+            return state.DoS(
+                dosLevelPotentiallyRelaxing,
+                error("CheckTransaction(): invalid joinsplit signature"),
+                REJECT_INVALID, "bad-txns-invalid-joinsplit-signature");
         }
     }
 
@@ -1543,11 +1590,19 @@ bool CheckTransactionWithoutProofVerification(uint32_t tiptime,const CTransactio
         return state.DoS(100, error("CheckTransaction(): tx.valueBalance has no sources or sinks"),
                             REJECT_INVALID, "bad-txns-valuebalance-nonzero");
     }
+    // Sapling Shielded Spend or Output are not allowed on public chains.
     if ( acpublic != 0 && (tx.vShieldedSpend.empty() == 0 || tx.vShieldedOutput.empty() == 0) )
     {
         return state.DoS(100, error("CheckTransaction(): this is a public chain, no sapling allowed"),
                          REJECT_INVALID, "bad-txns-acpublic-chain");
     }
+    // TODO: KMDCL is private chain again, i.e. acpublic flag is set to 0, so we allow
+    // Sapling Shielded Spend or Output on KMDCL. But as in a fact the shielded transactions
+    // were forbidden after KOMODO_SAPLING_DEADLINE - we should have another contextual check
+    // for transactions to ensure that from last known shielded transaction in KMD blockchain
+    // till the Dormancy activation height no shielded transactions are allowed. It should be
+    // consensus rule.
+
     if ( ASSETCHAINS_PRIVATE != 0 && invalid_private_taddr != 0 && tx.vShieldedSpend.empty() == 0 )
     {
         if ( !( current_season > 5 &&
@@ -2064,7 +2119,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         PrecomputedTransactionData txdata(tx);
-        if (!ContextualCheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true, txdata, Params().GetConsensus(), consensusBranchId))
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        if (!ContextualCheckInputs(tx, state, view, true, flags, true, txdata, Params().GetConsensus(), consensusBranchId))
         {
             //LogPrintf("accept failure.9\n");
             return error("AcceptToMemoryPool: ConnectInputs failed %s", hash.ToString());
@@ -2440,13 +2496,18 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex,bool checkPOW)
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
+    assert(nS8HardforkHeight < KMD_DORMANCY_ACTIVATION_HEIGHT);
     if (chainName.isKMD()) {
         if (nHeight == 1)
             return 100000000 * COIN; // ICO allocation
         else if (nHeight < nS8HardforkHeight)
             return 3 * COIN;
-        else
-            return COIN; // KIP-0002, https://github.com/KomodoPlatform/kips/blob/main/kips/kip-0002.mediawiki
+        else {
+            if (nHeight < KMD_DORMANCY_ACTIVATION_HEIGHT) {
+                return COIN; // KIP-0002, https://github.com/KomodoPlatform/kips/blob/main/kips/kip-0002.mediawiki
+            }
+            return 3 * COIN; // Dormancy rules apply
+        }
     } else {
         return komodo_ac_block_subsidy(nHeight);
     }
@@ -2863,6 +2924,22 @@ bool ContextualCheckInputs(
                     pvChecks->push_back(CScriptCheck());
                     check.swap(pvChecks->back());
                 } else if (!check()) {
+                    // Check whether the failure was caused by an outdated
+                    // consensus branch ID; if so, don't trigger DoS protection
+                    // immediately, and inform the node that they need to
+                    // upgrade. We only check the previous epoch's branch ID, on
+                    // the assumption that users creating transactions will
+                    // notice their transactions failing before a second network
+                    // upgrade occurs.
+                    auto prevConsensusBranchId = PrevEpochBranchId(consensusBranchId, consensusParams);
+                    CScriptCheck checkPrev(*coins, tx, i, flags, cacheStore, prevConsensusBranchId, &txdata);
+                    if (checkPrev()) {
+                        return state.DoS(
+                            10, false, REJECT_INVALID, strprintf(
+                                "old-consensus-branch-id (Expected %s, found %s)",
+                                HexInt(consensusBranchId),
+                                HexInt(prevConsensusBranchId)));
+                    }
                     if (flags & STANDARD_NOT_MANDATORY_VERIFY_FLAGS) {
                         // Check whether the failure was caused by a
                         // non-mandatory script verification check, such as
@@ -3420,6 +3497,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         return true;
     }
 
+    // TODO: fScriptChecks unused here, instead we are using fExpensiveChecks further ... 
     bool fScriptChecks = (!fCheckpointsEnabled || pindex->nHeight >= Checkpoints::GetTotalBlocksEstimate(chainparams.Checkpoints()));
     //if ( KOMODO_TESTNET_EXPIRATION != 0 && pindex->nHeight > KOMODO_TESTNET_EXPIRATION ) // "testnet"
     //    return(false);
@@ -3432,7 +3510,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                              REJECT_INVALID, "bad-txns-BIP30");
     }
 
-    unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+    uint32_t flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
 
     // DERSIG (BIP66) is also always enforced, but does not have a flag.
 
@@ -4485,7 +4563,7 @@ static bool ActivateBestChainStep(bool fSkipdpow, CValidationState &state, CBloc
             if ( !DisconnectTip(state) )
                 break;
         }
-        LogPrintf("reached rewind.%d, best to do: ./komodo-cli -ac_name=%s stop\n",KOMODO_REWIND,chainName.symbol().c_str());
+        LogPrintf("reached rewind.%d, best to do: ./kmdclassic-cli -ac_name=%s stop\n",KOMODO_REWIND,chainName.symbol().c_str());
 #ifdef WIN32
         boost::this_thread::sleep(boost::posix_time::milliseconds(20000));
 #else
@@ -6328,10 +6406,10 @@ bool static LoadBlockIndexDB()
 	      progress);
 
     EnforceNodeDeprecation(chainActive.Height(), true);
-    CBlockIndex *pindex;
-    if ( (pindex= chainActive.Tip()) != 0 )
+    if ( ASSETCHAINS_SAPLING <= 0 )
     {
-        if ( ASSETCHAINS_SAPLING <= 0 )
+        CBlockIndex *pindex = chainActive.Tip();
+        if ( pindex != nullptr )
         {
             LogPrintf("set sapling height, if possible from ht.%d %u\n",(int32_t)pindex->nHeight,(uint32_t)pindex->nTime);
             komodo_activate_sapling(pindex);
@@ -8041,30 +8119,19 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             return true;
         }
 
+        // If we already know the last header in the message, then it contains
+        // no new information for us.  In this case, we do not request
+        // more headers later.  This prevents multiple chains of redundant
+        // getheader requests from running in parallel if triggered by incoming
+        // blocks while the node is still in initial headers sync.
+        //
+        // (Allow disabling optimization in case there are unexpected problems.)
         bool hasNewHeaders = true;
-
-        // only KMD have checkpoints in sources, so, using IsInitialBlockDownload() here is
-        // not applicable for assetchains (!)
-        if (GetBoolArg("-fixibd", false) && chainName.isKMD() && IsInitialBlockDownload()) {
-
-            /**
-             * This is experimental feature avaliable only for KMD during initial block download running with
-             * -fixibd arg. Fix was offered by domob1812 here:
-             * https://github.com/bitcoin/bitcoin/pull/8054/files#diff-7ec3c68a81efff79b6ca22ac1f1eabbaR5099
-             * but later it was reverted bcz of synchronization stuck issues.
-             * Explanation:
-             * https://github.com/bitcoin/bitcoin/pull/8306#issuecomment-231584578
-             * Limiting this fix only to IBD and with special command line arg makes it safe, bcz
-             * default behaviour is to request new headers anyway.
-            */
-
-            // If we already know the last header in the message, then it contains
-            // no new information for us.  In this case, we do not request
-            // more headers later.  This prevents multiple chains of redundant
-            // getheader requests from running in parallel if triggered by incoming
-            // blocks while the node is still in initial headers sync.
+        if (GetBoolArg("-optimize-getheaders", true) && IsInitialBlockDownload()) {
             hasNewHeaders = (mapBlockIndex.count(headers.back().GetHash()) == 0);
         }
+        // https://github.com/bitcoin/bitcoin/pull/8054/files#diff-7ec3c68a81efff79b6ca22ac1f1eabbaR5099
+        // https://github.com/bitcoin/bitcoin/pull/8306#issuecomment-231584578
 
         CBlockIndex *pindexLast = NULL;
         BOOST_FOREACH(const CBlockHeader& header, headers) {
@@ -8091,13 +8158,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindexLast)
             UpdateBlockAvailability(pfrom->GetId(), pindexLast->GetBlockHash());
 
-        /* debug log */
-        // if (!hasNewHeaders && nCount == MAX_HEADERS_RESULTS && pindexLast) {
-        //         static int64_t bytes_saved;
-        //         bytes_saved += MAX_HEADERS_RESULTS * (CBlockHeader::HEADER_SIZE + 1348);
-        //         LogPrintf("[%d] don't request getheaders (%d) from peer=%d, bcz it's IBD and (%s) is already known!\n",
-        //             bytes_saved, pindexLast->nHeight, pfrom->id, headers.back().GetHash().ToString());
-        // }
+        // Temporary, until we're sure the optimization works
+        if (nCount == MAX_HEADERS_RESULTS && pindexLast && !hasNewHeaders) {
+            LogPrint("net", "NO more getheaders (%d) to send to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
+        } 
 
         if (nCount == MAX_HEADERS_RESULTS && pindexLast && hasNewHeaders) {
             // Headers message had its maximum size; the peer may have more headers.

@@ -1249,7 +1249,8 @@ UniValue signrawtransaction(const UniValue& params, bool fHelp, const CPubKey& m
             UpdateTransaction(mergedTx, i, sigdata);
             
             ScriptError serror = SCRIPT_ERR_OK;
-            if (!VerifyScript(txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, i, amount), consensusBranchId, &serror)) {
+            uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+            if (!VerifyScript(txin.scriptSig, prevPubKey, flags, TransactionSignatureChecker(&txConst, i, amount), consensusBranchId, &serror)) {
                 TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
             }
         }

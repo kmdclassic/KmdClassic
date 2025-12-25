@@ -390,8 +390,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-blocknotify=<cmd>", _("Execute command when the best block changes (%s in cmd is replaced by block hash)"));
     strUsage += HelpMessageOpt("-checkblocks=<n>", strprintf(_("How many blocks to check at startup (default: %u, 0 = all)"), 288));
     strUsage += HelpMessageOpt("-checklevel=<n>", strprintf(_("How thorough the block verification of -checkblocks is (0-4, default: %u)"), 3));
-    strUsage += HelpMessageOpt("-clientname=<SomeName>", _("Full node client name, default 'MagicBean'"));
-    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "komodo.conf"));
+    strUsage += HelpMessageOpt("-clientname=<SomeName>", _("Full node client name, default 'IronRoot'"));
+    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "kmdclassic.conf"));
     if (mode == HMM_BITCOIND)
     {
 #if !defined(WIN32)
@@ -569,7 +569,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageGroup(_("RPC server options:"));
     strUsage += HelpMessageOpt("-server", _("Accept command line and JSON-RPC commands"));
     strUsage += HelpMessageOpt("-rest", strprintf(_("Accept public REST requests (default: %u)"), 0));
-    strUsage += HelpMessageOpt("-rpcbind=<addr>", _("Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)"));
+    strUsage += HelpMessageOpt("-rpcbind=<addr>[:port]", _("Bind to given address to listen for JSON-RPC connections. Do not expose the RPC server to untrusted networks such as the public internet! This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost)"));
     strUsage += HelpMessageOpt("-rpcuser=<user>", _("Username for JSON-RPC connections"));
     strUsage += HelpMessageOpt("-rpcpassword=<pw>", _("Password for JSON-RPC connections"));
     strUsage += HelpMessageOpt("-rpcport=<port>", strprintf(_("Listen for JSON-RPC connections on <port> (default: %u or testnet: %u)"), 7771, 17771));
@@ -927,6 +927,31 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 #endif
 
     std::set_new_handler(new_handler_terminate);
+
+    // ********************************************************* Step: Pre-checks
+
+    boost::filesystem::path pathToCheck = GetDataDir() / "debug.log";
+    // Simple permission sanity-check for files inside datadir. If the daemon
+    // was started in Docker (root by default), debug.log may be owned by root
+    // and later non-root runs would hit segfaults/crashes when trying to write.
+    if (boost::filesystem::exists(pathToCheck)) {
+        auto can_open = [&](const char* mode) -> bool {
+            FILE* file = fopen(pathToCheck.string().c_str(), mode);
+            if (file == NULL) {
+                return false;
+            }
+            fclose(file);
+            return true;
+        };
+
+        const bool canRead = can_open("r");
+        const bool canWrite = can_open("a");
+
+        if (!canRead || !canWrite) {
+            return InitError(strprintf(_("Incorrect permissions on \"%s\"; ensure the current user can read and write this file. (Consider auditing the entire datadir \"%s\" for similar issues.)"),
+                pathToCheck.string(), GetDataDir().string()));
+        }
+    }
 
     // ********************************************************* Step 2: parameter interactions
     const CChainParams& chainparams = Params();
@@ -1642,7 +1667,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
                 if (fReindex) {
                     boost::filesystem::remove(GetDataDir() / KOMODO_STATE_FILENAME);
-                    boost::filesystem::remove(GetDataDir() / "signedmasks");
                     pblocktree->WriteReindexing(true);
                     //If we're reindexing in prune mode, wipe away unusable block files and all undo data files
                     if (fPruneMode)

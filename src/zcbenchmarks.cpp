@@ -250,11 +250,12 @@ double benchmark_large_tx(size_t nInputs)
     struct timeval tv_start;
     timer_start(tv_start);
     PrecomputedTransactionData txdata(final_spending_tx);
+    uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
     for (size_t i = 0; i < nInputs; i++) {
         ScriptError serror = SCRIPT_ERR_OK;
         assert(VerifyScript(final_spending_tx.vin[i].scriptSig,
                             prevPubKey,
-                            STANDARD_SCRIPT_VERIFY_FLAGS,
+                            flags,
                             TransactionSignatureChecker(&final_spending_tx, i, 1000000, txdata),
                             consensusBranchId,
                             &serror));

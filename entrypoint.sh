@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# By default, `komodod` inside the container runs as the `nobody:nogroup` user. All files
+# By default, `kmdclassicd` inside the container runs as the `nobody:nogroup` user. All files
 # created by the daemon in the data folder will also have these access privileges. To
 # bypass the `nobody:nogroup` ownership check on the data folder, you can use the
 # `-no-ownership-check` key.
@@ -22,4 +22,4 @@ if [[ "$nocheck" -eq 0 && "$(stat -c '%u:%g' /data)" != "65534:65534" ]]; then
 fi
 
 /app/fetch-params.sh
-exec /app/komodod -datadir=/data/.komodo "$@"
+exec /app/kmdclassicd -datadir=/data/.kmdclassic "$@"

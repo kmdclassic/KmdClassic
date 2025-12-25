@@ -33,9 +33,9 @@ if TARGET_WINDOWS
 komodo_test_SOURCES += test-komodo/komodo-test-res.rc
 endif
 
-komodo_test_CPPFLAGS = $(komodod_CPPFLAGS)
+komodo_test_CPPFLAGS = $(kmdclassicd_CPPFLAGS)
 
-komodo_test_LDADD = -lgtest $(komodod_LDADD)
+komodo_test_LDADD = -lgtest $(kmdclassicd_LDADD)
 
 komodo_test_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
 komodo_test_LIBTOOLFLAGS = --tag CXX
@@ -44,5 +44,5 @@ yellow := $(shell tput setaf 11)
 reset := $(shell tput sgr0)
 $(info $(yellow)[ Decker ]$(reset) Check the $(yellow)komodo_test$(reset) dependencies ...)
 
-$(info $(yellow)$$komodod_LDADD$(reset) is [$(komodod_LDADD)])
+$(info $(yellow)$$kmdclassicd_LDADD$(reset) is [$(kmdclassicd_LDADD)])
 $(info $(yellow)$$komodo_test_LDADD$(reset) is [${komodo_test_LDADD}])

@@ -162,7 +162,7 @@ UniValue getgenerate(const UniValue& params, bool fHelp, const CPubKey& mypk)
         throw runtime_error(
             "getgenerate\n"
             "\nReturn if the server is set to mine and/or mint coins or not. The default is false.\n"
-            "It is set with the command line argument -gen (or komodo.conf setting gen) and -mint\n"
+            "It is set with the command line argument -gen (or kmdclassic.conf setting gen) and -mint\n"
             "It can also be set with the setgenerate call.\n"
             "\nResult\n"
             "{\n"

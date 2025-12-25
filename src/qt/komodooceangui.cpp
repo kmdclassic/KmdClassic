@@ -61,8 +61,10 @@
 #if QT_VERSION < 0x050000
 #include <QTextDocument>
 #include <QUrl>
+#include <QDesktopServices>
 #else
 #include <QUrlQuery>
+#include <QDesktopServices>
 #endif
 
 const std::string KomodoOceanGUI::DEFAULT_UIPLATFORM =
@@ -133,7 +135,12 @@ KomodoOceanGUI::KomodoOceanGUI(const PlatformStyle *_platformStyle, const Networ
         move(QGuiApplication::primaryScreen()->availableGeometry().center() - frameGeometry().center());
     }
 
-    QString windowTitle = "[" + QString(chainName.ToString().c_str()) + "] ";
+    std::string chainNameStr = chainName.ToString();
+    if (chainNameStr == "KMD") {
+        chainNameStr = "KMDCL";
+    }
+    QString chainNameQStr = QString::fromStdString(chainNameStr);
+    QString windowTitle = "[" + chainNameQStr + "] ";
     windowTitle += tr(PACKAGE_NAME) + " - ";
 #ifdef ENABLE_WALLET
     enableWallet = WalletModel::isWalletEnabled();
@@ -404,12 +411,30 @@ void KomodoOceanGUI::createActions()
     m_mask_values_action->setStatusTip(tr("Mask the values in the Overview tab"));
     m_mask_values_action->setCheckable(true);
 
+    openWebsiteAction = new QAction(tr("&Website"), this);
+    openWebsiteAction->setStatusTip(tr("Open the %1 website").arg(tr(PACKAGE_NAME)));
+    openWebsiteAction->setMenuRole(QAction::NoRole);
+    openWebsiteAction->setData("https://kmdclassic.com/");
+
+    openTelegramAction = new QAction(tr("Telegram &Community"), this);
+    openTelegramAction->setStatusTip(tr("Open Telegram community"));
+    openTelegramAction->setMenuRole(QAction::NoRole);
+    openTelegramAction->setData("https://t.me/komodoclassic");
+
+    openDiscordAction = new QAction(tr("&Discord"), this);
+    openDiscordAction->setStatusTip(tr("Open Discord community"));
+    openDiscordAction->setMenuRole(QAction::NoRole);
+    openDiscordAction->setData("https://discord.gg/ZBZnx4CxXb");
+
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
     connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
+    connect(openWebsiteAction, SIGNAL(triggered()), this, SLOT(openWebsiteClicked()));
+    connect(openTelegramAction, SIGNAL(triggered()), this, SLOT(openWebsiteClicked()));
+    connect(openDiscordAction, SIGNAL(triggered()), this, SLOT(openWebsiteClicked()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
@@ -472,11 +497,16 @@ void KomodoOceanGUI::createMenuBar()
     settings->addAction(optionsAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
+
     if(walletFrame)
     {
         help->addAction(openRPCConsoleAction);
     }
     help->addAction(showHelpMessageAction);
+    help->addSeparator();
+    help->addAction(openWebsiteAction);
+    help->addAction(openTelegramAction);
+    help->addAction(openDiscordAction);
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
@@ -716,6 +746,16 @@ void KomodoOceanGUI::showHelpMessageClicked()
     helpMessageDialog->show();
 }
 
+void KomodoOceanGUI::openWebsiteClicked()
+{
+    QAction *action = qobject_cast<QAction*>(sender());
+    QString url = "https://kmdclassic.com/";
+    if (action && action->data().isValid()) {
+        url = action->data().toString();
+    }
+    QDesktopServices::openUrl(QUrl(url));
+}
+
 #ifdef ENABLE_WALLET
 void KomodoOceanGUI::openClicked()
 {
@@ -929,7 +969,7 @@ void KomodoOceanGUI::setNumBlocks(int count, const QDateTime& blockDate, double 
 
 void KomodoOceanGUI::message(const QString &title, const QString &message, unsigned int style, bool *ret)
 {
-    QString strTitle = tr("Komodo"); // default title
+    QString strTitle = tr("KmdClassic"); // default title
     // Default to information icon
     int nMBoxIcon = QMessageBox::Information;
     int nNotifyIcon = Notificator::Information;

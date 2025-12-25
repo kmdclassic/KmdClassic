@@ -11,6 +11,7 @@ const unsigned char ZCASH_SAPLING_FVFP_PERSONALIZATION[BLAKE2bPersonalBytes] =
     {'Z', 'c', 'a', 's', 'h', 'S', 'a', 'p', 'l', 'i', 'n', 'g', 'F', 'V', 'F', 'P'};
 
 const uint32_t SAPLING_BRANCH_ID = 0x76b809bb;
+const uint32_t DORMANCY_BRANCH_ID = 0x64726d6e;
 
 namespace libzcash {
 
@@ -129,7 +130,7 @@ class IsValidAddressForNetwork : public boost::static_visitor<bool> {
         }
 
         bool operator()(const libzcash::SaplingPaymentAddress &addr) const {
-            if (SAPLING_BRANCH_ID == branchId)
+            if (SAPLING_BRANCH_ID == branchId || DORMANCY_BRANCH_ID == branchId)
                 return true;
             else
                 return false;

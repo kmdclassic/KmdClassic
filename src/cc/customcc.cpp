@@ -3,7 +3,7 @@
  
  Just update the functions in this file, then from ~/komodo/src/cc
  
- ../komodo-cli -ac_name=CUSTOM stop
+ ../kmdclassic-cli -ac_name=CUSTOM stop
  ./makecustom
  ../komodod -ac_name=CUSTOM -ac_cclib=custom -ac_cc=2 ...
  

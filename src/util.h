@@ -155,7 +155,7 @@ boost::filesystem::path GetAppDir();
  * @brief get the OS-specific default komodod data directory
  * @note Windows: be "C:\Users\[username]\AppData\Roaming\Komodo"
  * @note Mac: ~/Library/Application Support/Komodo
- * @note Unix: ~/.komodo
+ * @note Unix: ~/.kmdclassic
  * @returns the default path to the Komodo data directory
  */
 boost::filesystem::path GetDefaultDataDir();

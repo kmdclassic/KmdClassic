@@ -557,7 +557,8 @@ static void MutateTxSign(CMutableTransaction& tx, const std::string& strInput)
             sigdata = CombineSignatures(prevPubKey, MutableTransactionSignatureChecker(&mergedTx, i, amount), sigdata, DataFromTransaction(txv, i), consensusBranchId);
         UpdateTransaction(mergedTx, i, sigdata);
 
-        if (!VerifyScript(txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, MutableTransactionSignatureChecker(&mergedTx, i, amount), consensusBranchId))
+        uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+        if (!VerifyScript(txin.scriptSig, prevPubKey, flags, MutableTransactionSignatureChecker(&mergedTx, i, amount), consensusBranchId))
             fComplete = false;
     }
 

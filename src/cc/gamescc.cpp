@@ -870,7 +870,7 @@ uint64_t games_gamefields(UniValue &obj,int64_t maxplayers,int64_t buyin,uint256
                 obj.push_back(Pair("seed",(int64_t)seed));
                 if ( games_iamregistered(maxplayers,gametxid,tx,mygamesaddr) > 0 )
                     sprintf(cmd,"cc/%s %llu %s",GAMENAME,(long long)seed,gametxid.ToString().c_str());
-                else sprintf(cmd,"./komodo-cli -ac_name=%s cclib register %d \"[%%22%s%%22]\"",chainName.symbol().c_str(),EVAL_GAMES,gametxid.ToString().c_str());
+                else sprintf(cmd,"./kmdclassic-cli -ac_name=%s cclib register %d \"[%%22%s%%22]\"",chainName.symbol().c_str(),EVAL_GAMES,gametxid.ToString().c_str());
                 obj.push_back(Pair("run",cmd));
             }
         }

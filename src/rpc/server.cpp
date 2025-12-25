@@ -279,7 +279,7 @@ UniValue stop(const UniValue& params, bool fHelp, const CPubKey& mypk)
 
     // Shutdown will take long enough that the response should get back
     StartShutdown();
-    sprintf(buf,"%s server stopping", !chainName.isKMD() ? chainName.symbol().c_str() : "Komodo");
+    sprintf(buf,"%s server stopping", !chainName.isKMD() ? chainName.symbol().c_str() : "KmdClassic");
     return buf;
 }
 
@@ -867,9 +867,9 @@ std::vector<std::string> CRPCTable::listCommands() const
 std::string HelpExampleCli(const std::string& methodname, const std::string& args)
 {
     if ( chainName.isKMD() ) {
-        return "> komodo-cli " + methodname + " " + args + "\n";
+        return "> kmdclassic-cli " + methodname + " " + args + "\n";
     } else {
-        return "> komodo-cli -ac_name=" + strprintf("%s", chainName.symbol().c_str()) + " " + methodname + " " + args + "\n";
+        return "> kmdclassic-cli -ac_name=" + strprintf("%s", chainName.symbol().c_str()) + " " + methodname + " " + args + "\n";
     }
 }
 

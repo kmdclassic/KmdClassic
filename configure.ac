@@ -1,26 +1,26 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
-define(_CLIENT_VERSION_MAJOR, 0)
-define(_CLIENT_VERSION_MINOR, 9)
-define(_CLIENT_VERSION_REVISION, 1)
-define(_CLIENT_VERSION_BUILD, 1)
+define(_CLIENT_VERSION_MAJOR, 1)
+define(_CLIENT_VERSION_MINOR, 0)
+define(_CLIENT_VERSION_REVISION, 0)
+define(_CLIENT_VERSION_BUILD, 24)
 define(_ZC_BUILD_VAL, m4_if(m4_eval(_CLIENT_VERSION_BUILD < 25), 1, m4_incr(_CLIENT_VERSION_BUILD), m4_eval(_CLIENT_VERSION_BUILD < 50), 1, m4_eval(_CLIENT_VERSION_BUILD - 24), m4_eval(_CLIENT_VERSION_BUILD == 50), 1, , m4_eval(_CLIENT_VERSION_BUILD - 50)))
 define(_CLIENT_VERSION_SUFFIX, m4_if(m4_eval(_CLIENT_VERSION_BUILD < 25), 1, _CLIENT_VERSION_REVISION-beta$1, m4_eval(_CLIENT_VERSION_BUILD < 50), 1, _CLIENT_VERSION_REVISION-rc$1, m4_eval(_CLIENT_VERSION_BUILD == 50), 1, _CLIENT_VERSION_REVISION, _CLIENT_VERSION_REVISION-$1)))
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2025)
 define(_COPYRIGHT_HOLDERS, "The %s developers")
-define(_COPYRIGHT_HOLDERS_SUBSTITUTION, "Ocean and Decker")
+define(_COPYRIGHT_HOLDERS_SUBSTITUTION, "KmdClassic Community")
 
-AC_INIT([KomodoOcean],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_SUFFIX(_ZC_BUILD_VAL)],[https://github.com/KomodoPlatform/KomodoOcean/issues],[KomodoOcean],[https://komodoplatform.com/en/wallets.html])
+AC_INIT([KomodoClassic],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_SUFFIX(_ZC_BUILD_VAL)],[https://github.com/kmdclassic/KmdClassic/issues],[KomodoClassic],[https://github.com/kmdclassic/KmdClassic])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([src/config/bitcoin-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 
-BITCOIN_DAEMON_NAME=komodod
-BITCOIN_GUI_NAME=komodo-qt
-BITCOIN_CLI_NAME=komodo-cli
-BITCOIN_TX_NAME=komodo-tx
+BITCOIN_DAEMON_NAME=kmdclassicd
+BITCOIN_GUI_NAME=kmdclassic-qt
+BITCOIN_CLI_NAME=kmdclassic-cli
+BITCOIN_TX_NAME=kmdclassic-tx
 BITCOIN_WALLET_TOOL_NAME=wallet-utility
 
 AC_CANONICAL_HOST

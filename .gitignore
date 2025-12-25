@@ -74,6 +74,7 @@ venv-mnf/
 Makefile
 src/qt/komodo-qt
 Komodo-Qt.app
+KmdClassic-Qt.app
 background.tiff*
 
 # Unit-tests
@@ -122,13 +123,17 @@ src/qt/moc_*.cpp
 src/qt/forms/ui_*.h        
 src/qt/test/moc*.cpp       
 komodo-qt                 
-komodo-qt_test            
+komodo-qt_test
+kmdclassic-qt
+kmdclassic-qt_test            
 src/qt/gen*
 
 src/config/komodo-config.h
 src/config/komodo-config.h.in
 src/komodod
 src/qt/komodo-qt
+src/kmdclassicd
+src/qt/kmdclassic-qt
 
 # chain files for iguana
 src/qt/*_7776
@@ -144,5 +149,8 @@ src/cryptoconditions/compile
 # Build output binaries (should not be committed)
 src/komodo-cli
 src/komodo-tx
+src/kmdclassic-cli
+src/kmdclassic-tx
+src/komodo-test
 src/univalue/test/object
 src/wallet-utility
