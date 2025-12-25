@@ -1,0 +1,297 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to build and release'
+        required: true
+        type: string
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    name: Build Linux binaries
+    timeout-minutes: 120
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
+          fetch-depth: 0
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libc6-dev \
+            m4 \
+            g++-multilib \
+            autoconf \
+            libtool \
+            ncurses-dev \
+            unzip \
+            git \
+            python3 \
+            bison \
+            zlib1g-dev \
+            wget \
+            libcurl4-gnutls-dev \
+            bsdmainutils \
+            automake \
+            curl
+      
+      - name: Build Linux binaries
+        run: |
+          ./zcutil/build-qt.sh
+      
+      - name: Prepare Linux release archive
+        run: |
+          TAG_NAME="${{ github.event.inputs.tag }}"
+          RELEASE_DIR="kmdclassic-linux-${TAG_NAME}"
+          mkdir -p "${RELEASE_DIR}"
+          
+          # Copy binaries from src directory (try kmdclassic names first, fallback to komodo)
+          if [ -f "src/kmdclassicd" ]; then
+            cp -f src/kmdclassicd "${RELEASE_DIR}/"
+          elif [ -f "src/komodod" ]; then
+            cp -f src/komodod "${RELEASE_DIR}/kmdclassicd"
+          else
+            echo "Error: kmdclassicd/komodod binary not found!"
+            exit 1
+          fi
+          
+          if [ -f "src/kmdclassic-cli" ]; then
+            cp -f src/kmdclassic-cli "${RELEASE_DIR}/"
+          elif [ -f "src/komodo-cli" ]; then
+            cp -f src/komodo-cli "${RELEASE_DIR}/kmdclassic-cli"
+          else
+            echo "Error: kmdclassic-cli/komodo-cli binary not found!"
+            exit 1
+          fi
+          
+          if [ -f "src/kmdclassic-tx" ]; then
+            cp -f src/kmdclassic-tx "${RELEASE_DIR}/"
+          elif [ -f "src/komodo-tx" ]; then
+            cp -f src/komodo-tx "${RELEASE_DIR}/kmdclassic-tx"
+          else
+            echo "Error: kmdclassic-tx/komodo-tx binary not found!"
+            exit 1
+          fi
+          
+          if [ -f "src/wallet-utility" ]; then
+            cp -f src/wallet-utility "${RELEASE_DIR}/"
+          else
+            echo "Warning: wallet-utility binary not found!"
+          fi
+          
+          if [ -f "src/qt/kmdclassic-qt" ]; then
+            cp -f src/qt/kmdclassic-qt "${RELEASE_DIR}/"
+          elif [ -f "src/qt/komodo-qt" ]; then
+            cp -f src/qt/komodo-qt "${RELEASE_DIR}/kmdclassic-qt"
+          else
+            echo "Warning: kmdclassic-qt/komodo-qt binary not found!"
+          fi
+          
+          # Verify at least main binaries exist
+          if [ ! -f "${RELEASE_DIR}/kmdclassicd" ] || [ ! -f "${RELEASE_DIR}/kmdclassic-cli" ] || [ ! -f "${RELEASE_DIR}/kmdclassic-tx" ]; then
+            echo "Error: Required binaries are missing!"
+            ls -la "${RELEASE_DIR}/"
+            exit 1
+          fi
+          
+          # Create archive
+          tar czf "kmdclassic-linux-${TAG_NAME}.tar.gz" "${RELEASE_DIR}/"
+          ls -lh "kmdclassic-linux-${TAG_NAME}.tar.gz"
+          
+          # Verify archive was created
+          if [ ! -f "kmdclassic-linux-${TAG_NAME}.tar.gz" ]; then
+            echo "Error: Archive was not created!"
+            exit 1
+          fi
+      
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmdclassic-linux-${{ github.event.inputs.tag }}
+          path: kmdclassic-linux-${{ github.event.inputs.tag }}.tar.gz
+          retention-days: 1
+
+  build-windows:
+    runs-on: ubuntu-22.04
+    name: Build Windows binaries
+    timeout-minutes: 120
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
+          fetch-depth: 0
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libc6-dev \
+            m4 \
+            g++-multilib \
+            autoconf \
+            libtool \
+            ncurses-dev \
+            unzip \
+            git \
+            python3 \
+            bison \
+            zlib1g-dev \
+            wget \
+            libcurl4-gnutls-dev \
+            bsdmainutils \
+            automake \
+            curl \
+            g++-mingw-w64-x86-64 \
+            gcc-mingw-w64-x86-64 \
+            mingw-w64-tools
+      
+      - name: Configure MinGW for POSIX
+        run: |
+          # Check available alternatives for gcc
+          if command -v x86_64-w64-mingw32-gcc-posix >/dev/null 2>&1; then
+            sudo update-alternatives --set x86_64-w64-mingw32-gcc $(which x86_64-w64-mingw32-gcc-posix)
+            echo "Configured x86_64-w64-mingw32-gcc to use POSIX variant"
+          else
+            echo "Warning: x86_64-w64-mingw32-gcc-posix not found"
+          fi
+          
+          # Check available alternatives for g++
+          if command -v x86_64-w64-mingw32-g++-posix >/dev/null 2>&1; then
+            sudo update-alternatives --set x86_64-w64-mingw32-g++ $(which x86_64-w64-mingw32-g++-posix)
+            echo "Configured x86_64-w64-mingw32-g++ to use POSIX variant"
+          else
+            echo "Warning: x86_64-w64-mingw32-g++-posix not found"
+          fi
+          
+          # Verify configuration
+          echo "Current gcc version:"
+          x86_64-w64-mingw32-gcc --version || true
+          echo "Current g++ version:"
+          x86_64-w64-mingw32-g++ --version || true
+      
+      - name: Build Windows binaries
+        run: |
+          ./zcutil/build-win.sh
+      
+      - name: Prepare Windows release archive
+        run: |
+          TAG_NAME="${{ github.event.inputs.tag }}"
+          RELEASE_DIR="kmdclassic-windows-${TAG_NAME}"
+          mkdir -p "${RELEASE_DIR}"
+          
+          # Copy binaries from src directory with .exe extension (try kmdclassic names first, fallback to komodo)
+          if [ -f "src/kmdclassicd.exe" ]; then
+            cp -f src/kmdclassicd.exe "${RELEASE_DIR}/"
+          elif [ -f "src/komodod.exe" ]; then
+            cp -f src/komodod.exe "${RELEASE_DIR}/kmdclassicd.exe"
+          else
+            echo "Error: kmdclassicd.exe/komodod.exe binary not found!"
+            exit 1
+          fi
+          
+          if [ -f "src/kmdclassic-cli.exe" ]; then
+            cp -f src/kmdclassic-cli.exe "${RELEASE_DIR}/"
+          elif [ -f "src/komodo-cli.exe" ]; then
+            cp -f src/komodo-cli.exe "${RELEASE_DIR}/kmdclassic-cli.exe"
+          else
+            echo "Error: kmdclassic-cli.exe/komodo-cli.exe binary not found!"
+            exit 1
+          fi
+          
+          if [ -f "src/kmdclassic-tx.exe" ]; then
+            cp -f src/kmdclassic-tx.exe "${RELEASE_DIR}/"
+          elif [ -f "src/komodo-tx.exe" ]; then
+            cp -f src/komodo-tx.exe "${RELEASE_DIR}/kmdclassic-tx.exe"
+          else
+            echo "Error: kmdclassic-tx.exe/komodo-tx.exe binary not found!"
+            exit 1
+          fi
+          
+          if [ -f "src/wallet-utility.exe" ]; then
+            cp -f src/wallet-utility.exe "${RELEASE_DIR}/"
+          else
+            echo "Warning: wallet-utility.exe binary not found!"
+          fi
+          
+          if [ -f "src/qt/kmdclassic-qt.exe" ]; then
+            cp -f src/qt/kmdclassic-qt.exe "${RELEASE_DIR}/"
+          elif [ -f "src/qt/komodo-qt.exe" ]; then
+            cp -f src/qt/komodo-qt.exe "${RELEASE_DIR}/kmdclassic-qt.exe"
+          else
+            echo "Warning: kmdclassic-qt.exe/komodo-qt.exe binary not found!"
+          fi
+          
+          # Verify at least main binaries exist
+          if [ ! -f "${RELEASE_DIR}/kmdclassicd.exe" ] || [ ! -f "${RELEASE_DIR}/kmdclassic-cli.exe" ] || [ ! -f "${RELEASE_DIR}/kmdclassic-tx.exe" ]; then
+            echo "Error: Required binaries are missing!"
+            ls -la "${RELEASE_DIR}/"
+            exit 1
+          fi
+          
+          # Create zip archive
+          zip -r "kmdclassic-windows-${TAG_NAME}.zip" "${RELEASE_DIR}/"
+          ls -lh "kmdclassic-windows-${TAG_NAME}.zip"
+          
+          # Verify archive was created
+          if [ ! -f "kmdclassic-windows-${TAG_NAME}.zip" ]; then
+            echo "Error: Archive was not created!"
+            exit 1
+          fi
+      
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmdclassic-windows-${{ github.event.inputs.tag }}
+          path: kmdclassic-windows-${{ github.event.inputs.tag }}.zip
+          retention-days: 1
+
+  create-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
+      
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kmdclassic-linux-${{ github.event.inputs.tag }}
+          path: ./artifacts/linux
+      
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kmdclassic-windows-${{ github.event.inputs.tag }}
+          path: ./artifacts/windows
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: Release ${{ github.event.inputs.tag }}
+          files: |
+            ./artifacts/linux/kmdclassic-linux-${{ github.event.inputs.tag }}.tar.gz
+            ./artifacts/windows/kmdclassic-windows-${{ github.event.inputs.tag }}.zip
+          draft: false
+          prerelease: false
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
