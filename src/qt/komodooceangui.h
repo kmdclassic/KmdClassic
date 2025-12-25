@@ -116,6 +116,8 @@ private:
     QAction *openAction;
     QAction *showHelpMessageAction;
     QAction *openWebsiteAction;
+    QAction *openTelegramAction;
+    QAction *openDiscordAction;
     QAction *m_mask_values_action;
 
     QSystemTrayIcon *trayIcon;
