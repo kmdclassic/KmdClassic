@@ -1,5 +1,22 @@
 # How to build? #
 
+There are several ways to build the daemon and wallet. All build scripts for various build options are located in `./zcutil`. For example:
+
+- **Linux builds:**
+  - `build.sh` - builds only the `kmdclassicd` daemon
+  - `build-qt.sh` - builds `kmdclassicd` and the Qt wallet `kmdclassic-qt`
+
+- **Cross-compilation from Linux:**
+  - `build-win.sh` - cross-compile for Windows from Linux
+  - `build-mac-cross.sh` - cross-compile for Mac (Intel) from Linux
+  - `build-mac-arm-cross.sh` - cross-compile for Mac (Apple Silicon) from Linux
+
+- **Native Mac builds:**
+  - `build-mac.sh` - build for Intel Mac
+  - `build-mac-arm.sh` - build for Apple Silicon Mac
+
+As you can see, almost all possible build variants are supported.
+
 #### Linux
 
 The following packages are needed:

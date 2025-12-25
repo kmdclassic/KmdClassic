@@ -10,6 +10,10 @@ Komodo Classic (KMDCL) is a project that aims to restore Komodo to its original 
 
 Visit [https://kmdclassic.com/](https://kmdclassic.com/) for more information about the project.
 
+## Community & Updates
+
+For the latest news and updates, join our Telegram channel: [https://t.me/komodoclassic](https://t.me/komodoclassic)
+
 <div align="center">
   <img src="icons/kmdclassic.png" alt="Komodo Classic" />
 </div>
@@ -31,11 +35,31 @@ This project is built on the **KomodoOcean** codebase, which was chosen for seve
 - **Performance**: This full node implementation is faster and more progressive than the original `komodod`
 - **Modern Architecture**: Built on a more advanced and maintainable codebase
 
+## Building
+
+For detailed build instructions, see [HOW-TO-BUILD.md](HOW-TO-BUILD.md).
+
+## Dormancy Hardfork
+
+The Dormancy hardfork is scheduled for **block 4771595**, which is estimated to occur around **January 5-6**. For more accurate timing and real-time countdown, please visit [https://countdown.kmdclassic.com/](https://countdown.kmdclassic.com/).
+
 ## Project Status
 
-**Work on this project has just begun.** We will be providing regular updates on the progress of development here in this repository. 
+Currently, **v1.0.0-beta25** is undergoing testing and will soon transition to **rc1** (Release Candidate). All main features that were promised have been tested and are working.
 
-**⚠️ Important**: Until the first official release is available, it is **too early to build and use** this project. The codebase is currently under active development and is not yet ready for production use.
+## Important Notice for Current Notary Nodes (S8)
+
+**⚠️ Important for Current Season 8 (S8) Notary Nodes:**
+
+With the dPoW Sunset, you will no longer be able to mine blocks with difficulty 1 (easy-mining) on the original KMD (Komodo) network. Maintaining nodes for the original KMD may become impractical for you. However, you can easily switch to **KMDCL** (!), as with the Dormancy upgrade we have kept the notary nodes list the same. This means that active KMD notary nodes can continue to mine KMDCL blocks with reduced difficulty, i.e., they can effectively contribute to supporting the KMDCL (Komodo Classic) network and become validator nodes.
+
+To make the switch:
+1. A few hours before the hardfork, stop the KMD daemon
+2. Rename the `.komodo` folder to `.kmdclassic`
+3. Rename the configuration file `komodo.conf` to `kmdclassic.conf`
+4. Start the `kmdclassicd` daemon as usual, enabling mining, etc., with your public key
+
+After the Dormancy hardfork occurs, you will receive **3 KMDCL** for each block you create. For splitfunds, instead of iguana, you can use the new RPC command `nn_split` (check the help for details). More detailed instructions will be published by us shortly.
 
 ## Origins & Vision
 
