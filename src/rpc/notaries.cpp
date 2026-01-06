@@ -518,7 +518,7 @@ UniValue nn_split(const UniValue& params, bool fHelp, const CPubKey& mypk) {
         result.pushKV("out_utxos_value", ValueFromAmount(sendAmount));
         result.pushKV("out_utxos_count", 1);
         
-        result.pushKV("estimated_tx_size", estimatedTxSize);
+        result.pushKV("estimated_tx_size", (int64_t)estimatedTxSize);
         result.pushKV("real_tx_size", (int)::GetSerializeSize(tx_, SER_NETWORK, PROTOCOL_VERSION));
         // result.pushKV("real_tx_size", EncodeHexTx(tx_).size() >> 1);
     }
