@@ -156,8 +156,8 @@ UniValue nn_getwalletinfo(const UniValue& params, bool fHelp, const CPubKey& myp
     result.pushKV("pubkey_address", pubkey_address);
     result.pushKV("ismine", fHavePrivateKey);
 
-    result.pushKV("transactions_count", pwalletMain->mapWallet.size());
-    result.pushKV("available_coins_count", vecOutputs.size());
+    result.pushKV("transactions_count", (int64_t)pwalletMain->mapWallet.size());
+    result.pushKV("available_coins_count", (int64_t)vecOutputs.size());
     
     // UniValue obj(UniValue::VOBJ);
     // obj.clear(); obj.setObject();
@@ -171,8 +171,8 @@ UniValue nn_getwalletinfo(const UniValue& params, bool fHelp, const CPubKey& myp
     // obj.pushKV("normal", count_ccOthers);
     // result.pushKV("others_utxos_count", obj);
 
-    result.pushKV("notaryvins_utxos_count", count_ccNotaryVins);
-    result.pushKV("others_utxos_count", count_ccOthers);
+    result.pushKV("notaryvins_utxos_count", (int64_t)count_ccNotaryVins);
+    result.pushKV("others_utxos_count", (int64_t)count_ccOthers);
 
     return result;
 }
@@ -512,8 +512,8 @@ UniValue nn_split(const UniValue& params, bool fHelp, const CPubKey& mypk) {
 
         // result.pushKV("params", params);
         result.pushKV("input_utxos_value", ValueFromAmount(mergedUTXOValue)); // UniValue::VNUM
-        result.pushKV("input_utxos_count", utxoInputs.size());
-        result.pushKV("out_notaryvins_count", countNotaryVinToCreate);
+        result.pushKV("input_utxos_count", (int64_t)utxoInputs.size());
+        result.pushKV("out_notaryvins_count", (int64_t)countNotaryVinToCreate);
 
         result.pushKV("out_utxos_value", ValueFromAmount(sendAmount));
         result.pushKV("out_utxos_count", 1);
