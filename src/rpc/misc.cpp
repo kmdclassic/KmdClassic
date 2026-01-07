@@ -81,7 +81,7 @@ int8_t StakedNotaryID(std::string &notaryname, char *Raddress);
 uint64_t komodo_notarypayamount(int32_t nHeight, int64_t notarycount);
 int32_t komodo_notaries(uint8_t pubkeys[64][33],int32_t height,uint32_t timestamp);*/
 
-#define KOMODO_VERSION "0.9.1"
+#define KOMODO_VERSION "1.0.0"
 extern uint16_t ASSETCHAINS_P2PPORT,ASSETCHAINS_RPCPORT;
 extern uint32_t ASSETCHAINS_CC;
 extern uint32_t ASSETCHAINS_MAGIC,ASSETCHAINS_ALGO;
@@ -251,7 +251,7 @@ UniValue getinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
     UniValue obj(UniValue::VOBJ);
     obj.push_back(Pair("version", CLIENT_VERSION));
     obj.push_back(Pair("protocolversion", PROTOCOL_VERSION));
-    obj.push_back(Pair("KMDversion", KOMODO_VERSION));
+    obj.push_back(Pair("KMDCLversion", KOMODO_VERSION));
     obj.push_back(Pair("synced", KOMODO_INSYNC!=0));
     obj.push_back(Pair("notarized", notarized_height));
     obj.push_back(Pair("prevMoMheight", prevMoMheight));
