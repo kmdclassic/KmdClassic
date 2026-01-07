@@ -636,13 +636,16 @@ void CChainParams::SetKMDUpgradeActivationHeights()
     if (!chainName.isKMD())
         return;
 
-    // Set the Sapling and Overwinter activation heights for KMD
-    consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
-    consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
-    ASSETCHAINS_SAPLING = KMD_SAPLING_ACTIVATION_HEIGHT;
-    LogPrintf("%s: SET SAPLING ACTIVATION height.%d\n", __func__, KMD_SAPLING_ACTIVATION_HEIGHT);
-    consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = KMD_DORMANCY_ACTIVATION_HEIGHT;
-    LogPrintf("%s: SET DORMANCY ACTIVATION height.%d\n", __func__, KMD_DORMANCY_ACTIVATION_HEIGHT);
+    if (strNetworkID == "main")
+    {
+        // Set the Sapling and Overwinter activation heights for KMD
+        consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+        consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+        ASSETCHAINS_SAPLING = KMD_SAPLING_ACTIVATION_HEIGHT;
+        LogPrintf("%s: SET SAPLING ACTIVATION height.%d\n", __func__, KMD_SAPLING_ACTIVATION_HEIGHT);
+        consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = KMD_DORMANCY_ACTIVATION_HEIGHT;
+        LogPrintf("%s: SET DORMANCY ACTIVATION height.%d\n", __func__, KMD_DORMANCY_ACTIVATION_HEIGHT);
+    }
 }
 
 // Block height must be >0 and <=last founders reward block height
