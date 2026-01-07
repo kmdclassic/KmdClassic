@@ -205,6 +205,11 @@ public:
      * Enforce coinbase consensus rule in regtest mode 
      */
     void SetRegTestCoinbaseMustBeProtected() { consensus.fCoinbaseMustBeProtected = true; }
+    /**
+     * Set the Sapling, Overwinter and Dormancy activation heights for KMD.
+     * This should be called after ParseParameters() has been executed.
+     */
+    void SetKMDUpgradeActivationHeights();
 
     /***
      * Set the default P2P IP port
@@ -267,6 +272,12 @@ protected:
  * @returns the currently selected parameters for this chain
  */
 const CChainParams &Params();
+
+/**
+ * @returns a non-const reference to the currently selected parameters for this chain
+ * Use with caution - only for methods that need to modify chain parameters
+ */
+CChainParams &MutableParams();
 
 /** 
  * @param network the network

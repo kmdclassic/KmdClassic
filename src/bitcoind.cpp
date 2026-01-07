@@ -32,6 +32,7 @@
 #include "komodo_gateway.h"
 #include "komodo_bitcoind.h"
 #include "komodo_gateway.h"
+#include "chainparams.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -159,6 +160,9 @@ bool AppInit(int argc, char* argv[])
         komodo_args(argv[0]);
         void chainparams_commandline();
         chainparams_commandline();
+
+        // Set KMD upgrade activation heights after parameters are parsed
+        MutableParams().SetKMDUpgradeActivationHeights();
 
         fprintf(stderr, "call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
         fprintf(stdout, "initialized %s at %u\n",chainName.symbol().c_str(),(uint32_t)time(NULL));

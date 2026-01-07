@@ -15,7 +15,7 @@
 #include "komodo_globals.h"
 #include "rpc/net.h"
 
-//#include "chainparams.h"
+#include "chainparams.h"
 #include "clientmodel.h"
 #include "fs.h"
 #include "guiconstants.h"
@@ -713,6 +713,9 @@ int main(int argc, char *argv[])
         }
         void chainparams_commandline();
         chainparams_commandline();
+
+        // Set KMD upgrade activation heights after parameters are parsed
+        MutableParams().SetKMDUpgradeActivationHeights();
 
         LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
         LogPrintf("initialized %s\n",chainName.symbol().c_str());

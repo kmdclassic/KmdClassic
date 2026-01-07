@@ -22,6 +22,7 @@
 #include "main.h"
 #include "crypto/equihash.h"
 #include "komodo_globals.h"
+#include "assetchain.h"
 #include "util.h"
 #include "utilstrencodings.h"
 
@@ -137,19 +138,10 @@ public:
         consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nProtocolVersion = 170008;
         consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = Consensus::NetworkUpgrade::NO_ACTIVATION_HEIGHT;
 
-        // Set the Sapling and Overwinter activation heights for KMDCL, as it's already 
-        // known. This will allow us to skip call komodo_activate_sapling during LoadBlockIndexDB.
+        // Set the Sapling and Overwinter activation heights for KMDCL will be done
+        // in SetKMDUpgradeActivationHeights() after ParseParameters() has been executed.
+        // This allows us to skip call komodo_activate_sapling during LoadBlockIndexDB.
         // Also komodo_activate_sapling called during ConnectTip() will be skipped.
-        if (chainName.isKMD()) {
-            // Here we can't call komodo_activate_sapling, so doing the same manually.
-            consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
-            consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
-            ASSETCHAINS_SAPLING = KMD_SAPLING_ACTIVATION_HEIGHT;
-            LogPrintf("%s: SET SAPLING ACTIVATION height.%d\n",__func__,KMD_SAPLING_ACTIVATION_HEIGHT);
-            consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = KMD_DORMANCY_ACTIVATION_HEIGHT;
-            LogPrintf("%s: SET DORMANCY ACTIVATION height.%d\n",__func__,KMD_DORMANCY_ACTIVATION_HEIGHT);
-            
-        }
 
         // The best chain should have at least this much work.
         // if (chainName.isKMD()) {
@@ -598,6 +590,11 @@ const CChainParams &Params() {
     return *pCurrentParams;
 }
 
+CChainParams &MutableParams() {
+    assert(pCurrentParams);
+    return *pCurrentParams;
+}
+
 CChainParams &Params(CBaseChainParams::Network network) {
     switch (network) {
         case CBaseChainParams::MAIN:
@@ -633,6 +630,20 @@ bool SelectParamsFromCommandLine()
     return true;
 }
 
+void CChainParams::SetKMDUpgradeActivationHeights()
+{
+    // This method should only be called for KMD chain, after ParseParameters() has been executed
+    if (!chainName.isKMD())
+        return;
+
+    // Set the Sapling and Overwinter activation heights for KMD
+    consensus.vUpgrades[Consensus::UPGRADE_OVERWINTER].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+    consensus.vUpgrades[Consensus::UPGRADE_SAPLING].nActivationHeight = KMD_SAPLING_ACTIVATION_HEIGHT;
+    ASSETCHAINS_SAPLING = KMD_SAPLING_ACTIVATION_HEIGHT;
+    LogPrintf("%s: SET SAPLING ACTIVATION height.%d\n", __func__, KMD_SAPLING_ACTIVATION_HEIGHT);
+    consensus.vUpgrades[Consensus::UPGRADE_DORMANCY].nActivationHeight = KMD_DORMANCY_ACTIVATION_HEIGHT;
+    LogPrintf("%s: SET DORMANCY ACTIVATION height.%d\n", __func__, KMD_DORMANCY_ACTIVATION_HEIGHT);
+}
 
 // Block height must be >0 and <=last founders reward block height
 // Index variable i ranges from 0 - (vFoundersRewardAddress.size()-1)
