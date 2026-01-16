@@ -203,11 +203,15 @@ def build_url(download_path: str, file_name: str) -> str:
     return url
 
 
-def check_url(url: str) -> Tuple[bool, int, str]:
+def check_url(url: str, package_name: str = None) -> Tuple[bool, int, str]:
     """
     Checks URL availability via HEAD request.
     Returns (success, status_code, message).
     Handles redirects automatically.
+    
+    Args:
+        url: URL to check
+        package_name: Package name for special handling (e.g., fontconfig with 418 status)
     """
     try:
         response = requests.head(
@@ -223,6 +227,9 @@ def check_url(url: str) -> Tuple[bool, int, str]:
             return True, status_code, "Ok"
         elif status_code == 404:
             return False, status_code, "Not Found"
+        elif status_code == 418 and package_name == 'fontconfig':
+            # fontconfig returns 418 (I'm a teapot) but the file is actually available
+            return True, status_code, "Ok (418 - special case)"
         else:
             return False, status_code, f"HTTP {status_code}"
     
@@ -243,7 +250,8 @@ def load_all_packages(depends_dir: Path) -> Dict[str, Dict[str, str]]:
     all_packages = {}
     for mk_file in depends_dir.glob('*.mk'):
         # Skip packages.mk as it's a package list, not a package
-        if mk_file.name == 'packages.mk':
+        # and dummy.mk as it's a test/example package
+        if mk_file.name in ['packages.mk', 'dummy.mk']:
             continue
         package_name, variables = parse_mk_file(mk_file)
         if package_name:
@@ -323,16 +331,35 @@ def check_dependency_file(mk_file: Path, depends_dir: Path, all_packages: Dict[s
             }
         
         # Check for required variables
-        if 'download_path' not in variables or 'file_name' not in variables:
+        if 'download_path' not in variables:
             return {
                 'package': package_name,
                 'status': 'skip',
-                'message': 'Missing required variables (download_path or file_name)'
+                'message': 'Missing required variable (download_path)'
+            }
+        
+        # Use download_file if available, otherwise file_name
+        # download_file is the actual filename on the server, file_name is for local storage
+        # Exception: for zeromq, use file_name instead of download_file
+        # because zeromq.mk has conditional blocks (mingw32 vs others) and download_file
+        # contains the mingw32-specific value (v$($(package)_version).tar.gz), while
+        # file_name contains the correct value for non-mingw32 builds (zeromq-$($(package)_version).tar.gz)
+        if package_name == 'zeromq' and 'file_name' in variables:
+            file_var = 'file_name'
+        elif 'download_file' in variables:
+            file_var = 'download_file'
+        elif 'file_name' in variables:
+            file_var = 'file_name'
+        else:
+            return {
+                'package': package_name,
+                'status': 'skip',
+                'message': 'Missing required variable (download_file or file_name)'
             }
         
         # Resolve variables
         download_path = resolve_variables(variables['download_path'], variables, package_name)
-        file_name = resolve_variables(variables['file_name'], variables, package_name)
+        file_name = resolve_variables(variables[file_var], variables, package_name)
         
         # Resolve cross-package references if information about other packages is available
         if all_packages:
@@ -351,7 +378,7 @@ def check_dependency_file(mk_file: Path, depends_dir: Path, all_packages: Dict[s
         url = build_url(download_path, file_name)
         
         # Check availability
-        success, status_code, message = check_url(url)
+        success, status_code, message = check_url(url, package_name)
         
         return {
             'package': package_name,
@@ -383,7 +410,9 @@ def main():
         sys.exit(1)
     
     # Find all .mk files, excluding packages.mk (it's a package list, not a package)
-    mk_files = sorted([f for f in depends_packages_dir.glob('*.mk') if f.name != 'packages.mk'])
+    # and dummy.mk (it's a test/example package)
+    mk_files = sorted([f for f in depends_packages_dir.glob('*.mk') 
+                       if f.name not in ['packages.mk', 'dummy.mk']])
     
     if not mk_files:
         print(f"No .mk files found in {depends_packages_dir}")
