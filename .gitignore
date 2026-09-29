@@ -154,3 +154,8 @@ src/kmdclassic-tx
 src/komodo-test
 src/univalue/test/object
 src/wallet-utility
+# Qt 6 CMake configuration probe
+/qt6-config/
+/build-qt6-*/
+
+__pycache__/

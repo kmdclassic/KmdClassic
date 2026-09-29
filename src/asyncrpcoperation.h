@@ -31,8 +31,6 @@
 
 #include <univalue.h>
 
-using namespace std;
-
 /**
  * AsyncRPCOperation objects are submitted to the AsyncRPCQueue for processing.
  * 
@@ -164,4 +162,3 @@ private:
 };
 
 #endif /* ASYNCRPCOPERATION_H */
-

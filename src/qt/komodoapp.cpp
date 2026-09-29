@@ -63,7 +63,8 @@
 #include <QSslConfiguration>
 #endif
 
-#if defined(QT_STATICPLUGIN)
+// Qt 6 plugin initialization objects are supplied by the CMake link bridge.
+#if defined(QT_STATICPLUGIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QtPlugin>
 #if QT_VERSION < 0x050000
 Q_IMPORT_PLUGIN(qcncodecs)
@@ -645,11 +646,11 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(komodo);
     Q_INIT_RESOURCE(komodo_locale);
 
-#if QT_VERSION > 0x050100
-    // Generate high-dpi pixmaps
+#if QT_VERSION > 0x050100 && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // Qt 6 enables high-DPI pixmaps and scaling by default.
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
-#if QT_VERSION >= 0x050600
+#if QT_VERSION >= 0x050600 && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 #ifdef Q_OS_MAC

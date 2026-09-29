@@ -5,11 +5,11 @@ zcash_packages := libsodium
 qt_native_packages = native_protobuf
 qt_packages = qrencode protobuf
 
-qt_linux_packages:=qt expat libxcb xcb_proto libXau xproto freetype fontconfig libxkbcommon libxcb_util libxcb_util_render libxcb_util_keysyms libxcb_util_image libxcb_util_wm
+qt_linux_packages:=qt6 qt6_translations libxcb_util_cursor expat libxcb xcb_proto libXau xproto freetype fontconfig libxkbcommon libxcb_util libxcb_util_render libxcb_util_keysyms libxcb_util_image libxcb_util_wm
 qt_android_packages=qt
 
 qt_darwin_packages=qt
-qt_mingw32_packages=qt
+qt_mingw32_packages=qt6 qt6_translations
 
 
 rust_crates := \
@@ -92,4 +92,8 @@ darwin_native_packages += native_cctools native_libtapi native_cdrkit
 ifeq ($(strip $(FORCE_USE_SYSTEM_CLANG)),)
 darwin_native_packages+= native_clang
 endif
+endif
+
+ifneq ($(filter linux mingw32,$(host_os)),)
+qt_native_packages += native_qt6 native_meson native_ninja
 endif

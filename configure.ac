@@ -58,8 +58,8 @@ else
   CXXFLAGS_overridden=no
 fi
 
-# Zcash requries C++11 compatibility; set it early:
-CXXFLAGS="-std=c++11 $CXXFLAGS"
+# Qt 6 requires C++17, including translation units shared with the daemon.
+CXXFLAGS="$CXXFLAGS -std=c++17"
 
 AC_PROG_CXX
 m4_ifdef([AC_PROG_OBJCXX],[AC_PROG_OBJCXX])
@@ -718,7 +718,7 @@ fi
 BITCOIN_QT_INIT
 
 dnl sets $bitcoin_enable_qt, $bitcoin_enable_qt_test, $bitcoin_enable_qt_dbus
-BITCOIN_QT_CONFIGURE([$use_pkgconfig], [qt5])
+BITCOIN_QT_CONFIGURE([5.15])
 
 if test x$build_komodo_utils$build_komodod$use_tests$build_bitcoind$bitcoin_enable_qt = xnononono; then
     use_boost=no

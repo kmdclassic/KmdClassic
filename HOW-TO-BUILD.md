@@ -1,5 +1,9 @@
 # How to build? #
 
+Linux and MinGW-w64 GUI builds now use Qt 6.11.2 and C++17. See
+[the Qt 6 build instructions](doc/build-qt6.md) for prerequisites and separate
+build directories.
+
 There are several ways to build the daemon and wallet. All build scripts for various build options are located in `./zcutil`. For example:
 
 - **Linux builds:**

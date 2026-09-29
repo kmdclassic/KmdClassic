@@ -12,6 +12,7 @@
 #include "sync.h"
 #include "utiltime.h"
 
+#include <QLocale>
 #include <QDebug>
 #include <QList>
 
@@ -127,7 +128,7 @@ QVariant BanTableModel::data(const QModelIndex &index, int role) const
         case Bantime:
             QDateTime date = QDateTime::fromMSecsSinceEpoch(0);
             date = date.addSecs(rec->banEntry.nBanUntil);
-            return date.toString(Qt::SystemLocaleLongDate);
+            return QLocale().toString(date, QLocale::LongFormat);
         }
     }
 

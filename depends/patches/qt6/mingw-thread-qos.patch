@@ -1,0 +1,17 @@
+Disable the optional thread QoS request when the SDK does not define RS3.
+
+MinGW-w64 8 headers lack both _WIN32_WINNT_WIN10_RS3 and ThreadPowerThrottling.
+An undefined macro evaluates to zero in #if, incorrectly enabling this code.
+The wallet does not request QThread QoS levels. Keep ordinary threading intact.
+
+--- a/src/corelib/thread/qthread_win.cpp
++++ b/src/corelib/thread/qthread_win.cpp
+@@ -206,7 +206,7 @@ void QThreadPrivate::setQualityOfServiceLevel(QThread::QualityOfService qosLevel)
+     Q_Q(QThread);
+     serviceLevel = qosLevel;
+ 
+-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10_RS3)
++#if defined(_WIN32_WINNT_WIN10_RS3) && (_WIN32_WINNT >= _WIN32_WINNT_WIN10_RS3)
+     qCDebug(lcQThread) << "Setting thread QoS class to" << qosLevel << "for thread" << q;
+ 
+     THREAD_POWER_THROTTLING_STATE state;

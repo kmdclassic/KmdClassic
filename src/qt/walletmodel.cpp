@@ -403,7 +403,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareZTransaction(WalletModelZTransa
     // Track whether we see any Sprout addresses
     bool noSproutAddrs = !fromSprout;
 
-    set<std::string> setAddress; // Used to detect duplicates
+    std::set<std::string> setAddress; // Used to detect duplicates
 
     // Recipients
     std::vector<SendManyRecipient> taddrRecipients;
@@ -465,7 +465,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareZTransaction(WalletModelZTransa
 
         setAddress.insert(rcp.address.toStdString());
 
-        string memo;
+        std::string memo;
         //Memo validation
         //..... add later
         //Now it is null
