@@ -43,6 +43,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -169,15 +170,15 @@ void AsyncRPCOperation_mergetoaddress::main()
         std::string message = find_value(objError, "message").get_str();
         set_error_code(code);
         set_error_message(message);
-    } catch (const runtime_error& e) {
+    } catch (const std::runtime_error& e) {
         set_error_code(-1);
-        set_error_message("runtime error: " + string(e.what()));
-    } catch (const logic_error& e) {
+        set_error_message("runtime error: " + std::string(e.what()));
+    } catch (const std::logic_error& e) {
         set_error_code(-1);
-        set_error_message("logic error: " + string(e.what()));
-    } catch (const exception& e) {
+        set_error_message("logic error: " + std::string(e.what()));
+    } catch (const std::exception& e) {
         set_error_code(-1);
-        set_error_message("general exception: " + string(e.what()));
+        set_error_message("general exception: " + std::string(e.what()));
     } catch (...) {
         set_error_code(-2);
         set_error_message("unknown error");
@@ -882,16 +883,16 @@ UniValue AsyncRPCOperation_mergetoaddress::perform_joinsplit(
     }
 
     if (witnesses.size() != info.notes.size()) {
-        throw runtime_error("number of notes and witnesses do not match");
+        throw std::runtime_error("number of notes and witnesses do not match");
     }
 
     if (info.notes.size() != info.zkeys.size()) {
-        throw runtime_error("number of notes and spending keys do not match");
+        throw std::runtime_error("number of notes and spending keys do not match");
     }
 
     for (size_t i = 0; i < witnesses.size(); i++) {
         if (!witnesses[i]) {
-            throw runtime_error("joinsplit input could not be found in tree");
+            throw std::runtime_error("joinsplit input could not be found in tree");
         }
         info.vjsin.push_back(JSInput(*witnesses[i], info.notes[i], info.zkeys[i]));
     }
@@ -906,7 +907,7 @@ UniValue AsyncRPCOperation_mergetoaddress::perform_joinsplit(
     }
 
     if (info.vjsout.size() != ZC_NUM_JS_INPUTS || info.vjsin.size() != ZC_NUM_JS_OUTPUTS) {
-        throw runtime_error("unsupported joinsplit input/output counts");
+        throw std::runtime_error("unsupported joinsplit input/output counts");
     }
 
     CMutableTransaction mtx(tx_);

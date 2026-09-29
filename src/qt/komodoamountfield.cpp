@@ -119,8 +119,10 @@ public:
 
             opt.rect = rect();
 
-            cachedMinimumSizeHint = style()->sizeFromContents(QStyle::CT_SpinBox, &opt, hint, this)
-                                    .expandedTo(QApplication::globalStrut());
+            cachedMinimumSizeHint = style()->sizeFromContents(QStyle::CT_SpinBox, &opt, hint, this);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            cachedMinimumSizeHint = cachedMinimumSizeHint.expandedTo(QApplication::globalStrut());
+#endif
         }
         return cachedMinimumSizeHint;
     }

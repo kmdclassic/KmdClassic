@@ -92,7 +92,7 @@ then
     shift
 fi
 
-PREFIX="$(pwd)/depends/$BUILD/"
+PREFIX="$(pwd)/depends/$HOST/"
 
 HOST="$HOST" BUILD="$BUILD" "$MAKE" "$@" -C ./depends/ V=1
 ./autogen.sh
@@ -100,8 +100,8 @@ HOST="$HOST" BUILD="$BUILD" "$MAKE" "$@" -C ./depends/ V=1
 #CONFIG_SITE="$PWD/depends/$HOST/share/config.site" 
 #--disable-shared --with-pic
 
-#./configure --prefix="${PREFIX}" --disable-bip70 --with-gui=qt5 --enable-tests=no --enable-wallet=yes "$HARDENING_ARG" "$LCOV_ARG" "$TEST_ARG" "$MINING_ARG" "$PROTON_ARG" $CONFIGURE_FLAGS CXXFLAGS='-g0 -O2'
-./configure --prefix="${PREFIX}" --with-gui=qt5 --disable-bip70 --enable-tests=no --enable-wallet=yes "$HARDENING_ARG" "$LCOV_ARG" "$TEST_ARG" "$MINING_ARG" "$PROTON_ARG" $CONFIGURE_FLAGS CXXFLAGS='-g0 -O2'
+#./configure --prefix="${PREFIX}" --disable-bip70 --with-gui=qt6 --enable-tests=no --enable-wallet=yes "$HARDENING_ARG" "$LCOV_ARG" "$TEST_ARG" "$MINING_ARG" "$PROTON_ARG" $CONFIGURE_FLAGS CXXFLAGS='-g0 -O2'
+CONFIG_SITE="$PWD/depends/$HOST/share/config.site" ./configure --prefix="${PREFIX}" --with-gui=qt6 --disable-bip70 --enable-tests=no --enable-wallet=yes "$HARDENING_ARG" "$LCOV_ARG" "$TEST_ARG" "$MINING_ARG" "$PROTON_ARG" $CONFIGURE_FLAGS CXXFLAGS='-g0 -O2'
 
 ### don't used here, bcz we have cclib static built-in in libbitcoin_server_a
 #BUILD CCLIB

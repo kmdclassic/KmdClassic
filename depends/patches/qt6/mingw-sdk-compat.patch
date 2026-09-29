@@ -1,0 +1,61 @@
+Support the MinGW-w64 8 SDK shipped with Ubuntu 22.04.
+
+Supply missing Winsock option constants (values from current ws2ipdef.h).
+Qt already disables the D3D12 backend without ID3D12Device2; do not include
+its unavailable debug-layer header before checking that condition.
+
+--- a/src/network/socket/qnativesocketengine_win.cpp
++++ b/src/network/socket/qnativesocketengine_win.cpp
+@@ -43,6 +43,15 @@ QT_BEGIN_NAMESPACE
+ #ifndef TCP_KEEPCNT
+ #define TCP_KEEPCNT 16
+ #endif
++#ifndef IP_UNICAST_IF
++#define IP_UNICAST_IF 31
++#endif
++#ifndef IP_IFLIST
++#define IP_IFLIST 28
++#endif
++#ifndef IP_ADD_IFLIST
++#define IP_ADD_IFLIST 29
++#endif
+ 
+ #if defined(QNATIVESOCKETENGINE_DEBUG)
+ 
+--- a/src/gui/rhi/qrhid3d12_p.h
++++ b/src/gui/rhi/qrhid3d12_p.h
+@@ -23,7 +23,6 @@
+ #include <array>
+ 
+ #include <d3d12.h>
+-#include <d3d12sdklayers.h>
+ #include <dxgi1_6.h>
+ #include <dcomp.h>
+ 
+@@ -37,6 +36,7 @@
+ // in such builds.
+ #ifdef __ID3D12Device2_INTERFACE_DEFINED__
+ #define QRHI_D3D12_AVAILABLE
++#include <d3d12sdklayers.h>
+ 
+ // Will use ID3D12GraphicsCommandList5 as long as the d3d12.h is new enough.
+ // Otherwise, some features (VRS) will not be available.
+
+--- a/src/3rdparty/D3D12MemoryAllocator/D3D12MemAlloc.cpp
++++ b/src/3rdparty/D3D12MemoryAllocator/D3D12MemAlloc.cpp
+@@ -21,6 +21,9 @@
+ //
+ 
+ #include "D3D12MemAlloc.h"
++
++// Match the SDK requirement of Qt's D3D12 backend.
++#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+ 
+ #include <combaseapi.h>
+ #include <mutex>
+@@ -10572,3 +10575,5 @@
+ #if defined(__clang__) || defined(__GNUC__)
+ #pragma GCC diagnostic pop
+ #endif
++
++#endif // __ID3D12Device2_INTERFACE_DEFINED__

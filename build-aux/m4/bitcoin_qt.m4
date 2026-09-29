@@ -53,7 +53,7 @@ dnl CAUTION: Do not use this inside of a conditional.
 AC_DEFUN([BITCOIN_QT_INIT],[
   dnl enable qt support
   AC_ARG_WITH([gui],
-    [AS_HELP_STRING([--with-gui@<:@=no|qt5|auto@:>@],
+    [AS_HELP_STRING([--with-gui@<:@=no|qt5|qt6|auto@:>@],
     [build bitcoin-qt GUI (default=auto)])],
     [
      bitcoin_qt_want_version=$withval
@@ -104,6 +104,9 @@ dnl Outputs: See _BITCOIN_QT_FIND_LIBS
 dnl Outputs: Sets variables for all qt-related tools.
 dnl Outputs: bitcoin_enable_qt, bitcoin_enable_qt_dbus, bitcoin_enable_qt_test
 AC_DEFUN([BITCOIN_QT_CONFIGURE],[
+  if test "$bitcoin_qt_want_version" = "qt6" || { test "$bitcoin_qt_want_version" = "auto" && { test -f "$depends_prefix/lib/cmake/Qt6/Qt6Config.cmake" || $PKG_CONFIG --exists Qt6Core; }; }; then
+    _BITCOIN_QT6_CONFIGURE
+  else
   qt_version=">= $1"
   qt_lib_prefix="Qt5"
   BITCOIN_QT_CHECK([_BITCOIN_QT_FIND_LIBS])
@@ -281,6 +284,7 @@ AC_DEFUN([BITCOIN_QT_CONFIGURE],[
   AC_SUBST(QT_TEST_INCLUDES)
   AC_SUBST(QT_SELECT, qt5)
   AC_SUBST(MOC_DEFS)
+  fi
 ])
 
 dnl All macros below are internal and should _not_ be used from configure.ac.
@@ -394,4 +398,61 @@ AC_DEFUN([_BITCOIN_QT_FIND_LIBS],[
       PKG_CHECK_MODULES([QT_DBUS], [${qt_lib_prefix}DBus $qt_version], [QT_DBUS_INCLUDES="$QT_DBUS_CFLAGS"; have_qt_dbus=yes], [have_qt_dbus=no])
     fi
   ])
+])
+
+AC_DEFUN([_BITCOIN_QT6_CONFIGURE],[
+  AC_PATH_PROG([CMAKE], [cmake])
+  AC_PATH_PROG([PYTHON3], [python3])
+  AS_IF([test -z "$CMAKE" || test -z "$PYTHON3"],
+    [AC_MSG_ERROR([Qt 6 requires CMake >= 3.22 and Python 3])])
+  qt6_prefix="$depends_prefix"
+  if test -z "$qt6_prefix" && test -n "$qt_lib_path"; then
+    qt6_prefix=`dirname "$qt_lib_path"`
+  fi
+  if test -z "$qt6_prefix"; then
+    qt6_prefix=`$PKG_CONFIG --variable=prefix Qt6Core 2>/dev/null`
+  fi
+  qt6_host_tools=""
+  if test -n "$qt_bin_path"; then
+    qt6_host_tools=`dirname "$qt_bin_path"`
+  fi
+  AC_MSG_CHECKING([Qt 6 libraries, static plugins and native tools with CMake])
+  if CC="$CC" CXX="$CXX" "$PYTHON3" "$srcdir/build-aux/qt6/configure.py" \
+      --build-dir="$ac_pwd/qt6-config" --prefix="$qt6_prefix" \
+      --host-tools="$qt6_host_tools" --host="$host" --dbus="$use_dbus" >&AS_MESSAGE_LOG_FD 2>&1; then
+    . "$ac_pwd/qt6-config/qt-vars.sh"
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_ERROR([Qt 6 configuration/link check failed; see config.log])
+  fi
+  bitcoin_enable_qt=yes
+  bitcoin_enable_qt_test=no
+  bitcoin_enable_qt_dbus=no
+  test -n "$QT_TEST_LIBS" && bitcoin_enable_qt_test=yes
+  test -n "$QT_DBUS_LIBS" && bitcoin_enable_qt_dbus=yes
+  if test "$use_dbus" = "yes" && test "$bitcoin_enable_qt_dbus" = "no"; then
+    AC_MSG_ERROR([Qt 6 DBus was requested but is unavailable])
+  fi
+  QT_SELECT=qt6
+  QT_PIE_FLAGS=$PIC_FLAGS
+  MOC_DEFS='-DHAVE_CONFIG_H -I$(srcdir)'
+  case $host in
+    *mingw*) QT_LDFLAGS="$QT_LDFLAGS -mwindows" ;;
+  esac
+  AC_SUBST(QT_SELECT)
+  AC_SUBST(QT_PIE_FLAGS)
+  AC_SUBST(QT_INCLUDES)
+  AC_SUBST(QT_LIBS)
+  AC_SUBST(QT_LDFLAGS)
+  AC_SUBST(QT_DBUS_INCLUDES)
+  AC_SUBST(QT_DBUS_LIBS)
+  AC_SUBST(QT_TEST_INCLUDES)
+  AC_SUBST(QT_TEST_LIBS)
+  AC_SUBST(MOC_DEFS)
+  AC_SUBST(MOC)
+  AC_SUBST(UIC)
+  AC_SUBST(RCC)
+  AC_SUBST(LRELEASE)
+  AC_SUBST(LUPDATE)
+  AC_SUBST(LCONVERT)
 ])

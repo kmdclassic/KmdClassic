@@ -389,3 +389,9 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-man
 clean-local:
 	rm -rf test_komodo.coverage/ zcash-gtest.coverage/ total.coverage/ $(OSX_APP)
 	rm -rf dist/ dpi36.background.tiff dpi72.background.tiff
+
+EXTRA_DIST += doc/build-qt6.md build-aux/qt6/CMakeLists.txt build-aux/qt6/probe.cpp build-aux/qt6/configure.py
+
+# CMake caches compiler and target platform information.
+distclean-local:
+	rm -rf qt6-config
