@@ -14,6 +14,9 @@ $(package)_config_opts+=-DFEATURE_gui=OFF -DFEATURE_widgets=OFF -DFEATURE_dbus=O
 $(package)_config_opts+=-DFEATURE_icu=OFF -DFEATURE_openssl=OFF -DFEATURE_sql=OFF
 $(package)_config_opts+=-DFEATURE_system_zlib=OFF -DFEATURE_system_pcre2=OFF -DFEATURE_zstd=OFF
 $(package)_config_opts+=-DINSTALL_LIBEXECDIR=bin
+ifeq ($(build_os),darwin)
+$(package)_config_opts+=-DFEATURE_framework=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=$(OSX_MIN_VERSION)
+endif
 endef
 
 define $(package)_fetch_cmds

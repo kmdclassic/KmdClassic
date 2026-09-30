@@ -363,7 +363,7 @@ libbitcoin_wallet_a_SOURCES = \
   $(LIBZCASH_H)
 
 # crypto primitives library
-crypto_libbitcoin_crypto_a_CPPFLAGS = $(BITCOIN_CONFIG_INCLUDES)
+crypto_libbitcoin_crypto_a_CPPFLAGS = $(BITCOIN_CONFIG_INCLUDES) $(BOOST_CPPFLAGS)
 crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/common.h \
   crypto/equihash.cpp \
@@ -668,7 +668,7 @@ endif
 
 libzcashconsensus_la_LDFLAGS = -no-undefined $(RELDFLAGS) -static
 libzcashconsensus_la_LIBADD = $(LIBSECP256K1)
-libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -I$(srcdir)/cryptoconditions/include -DBUILD_BITCOIN_INTERNAL -fvisibility=hidden
+libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) $(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -I$(srcdir)/cryptoconditions/include -DBUILD_BITCOIN_INTERNAL -fvisibility=hidden
 endif
 #
 

@@ -1,41 +1,63 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-BDB_FILE="./depends/packages/bdb.mk"
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
+SOURCE_DIR="$PWD"
 
-if [[ ! -f "$BDB_FILE" ]]; then
-    echo "Error: The file $BDB_FILE does not exist."
-    echo "Please check the path and try again."
+if [[ "${1:-}" == --help ]]; then
+    cat <<'EOF'
+Usage: ./zcutil/build-mac-arm.sh [MAKEARGS...]
+Build the Qt 6 wallet natively on Apple Silicon using Xcode and depends.
+Prerequisites: brew install autoconf automake libtool pkg-config coreutils cmake make
+Overrides: MAKE, JOBS, BUILD_DIR, OSX_MIN_VERSION, CXXFLAGS, CONFIGURE_FLAGS.
+The default application build directory is build-qt6-mac-arm.
+EOF
+    exit 0
+fi
+
+if [[ "$(uname -s)" != Darwin || "$(uname -m)" != arm64 ]]; then
+    echo "This script requires a native arm64 macOS shell (not Rosetta)." >&2
     exit 1
 fi
 
-if git diff --quiet "$BDB_FILE"; then
-    echo "You are trying to build KomodoOcean for the Apple Silicon (arm64) chipset."
-    echo "As it’s become known (https://github.com/zcash/zcash/issues/6977), the current version of Berkeley DB 6.2.23 will not work properly in this configuration."
-    echo "Would you like to upgrade it to 6.2.32? Please, backup your wallet.dat if you agree to upgrade to Berkeley DB 6.2.32."
-
-    read -p "Do you want to proceed with the upgrade? (yes/no): " user_response
-
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        SED_INPLACE="sed -i .bak"
-    else
-        SED_INPLACE="sed -i"
-    fi
-
-    if [[ "$user_response" == "yes" ]]; then
-        $SED_INPLACE 's/$(package)_version=6.2.23/$(package)_version=6.2.32/' "$BDB_FILE"
-        $SED_INPLACE 's/$(package)_sha256_hash=47612c8991aa9ac2f6be721267c8d3cdccf5ac83105df8e50809daea24e95dc7/$(package)_sha256_hash=a9c5e2b004a5777aa03510cfe5cd766a4a3b777713406b02809c17c8e0e7a8fb/' "$BDB_FILE"
-
-        echo "Berkeley DB version updated to 6.2.32 successfully."
-    else
-        echo "No changes made. Berkeley DB remains at version 6.2.23."
-    fi
-else
-    echo "The file $BDB_FILE already contains the changes. No further modification is needed."
+# Non-interactive SSH sessions do not normally load Homebrew's shell setup.
+if [[ -d /opt/homebrew/bin ]]; then
+    export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 fi
+MAKE="${MAKE:-gmake}"
+for tool in "$MAKE" cmake python3 autoconf automake glibtoolize pkg-config xcrun; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "Missing build tool: $tool (see --help)." >&2
+        exit 1
+    fi
+done
+xcrun --show-sdk-path >/dev/null
 
-make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=aarch64-apple-darwin -j$(sysctl -n hw.ncpu)
+# Keep the depends prefix stable across macOS updates, and use native arm64 Rust.
+HOST=aarch64-apple-darwin
+BUILD="$HOST"
+OSX_MIN_VERSION="${OSX_MIN_VERSION:-13.0}"
+export MACOSX_DEPLOYMENT_TARGET="$OSX_MIN_VERSION"
+if [[ -z "${JOBS:-}" ]]; then
+    JOBS=$(( $(sysctl -n hw.memsize) / 3221225472 ))
+    (( JOBS >= 1 )) || JOBS=1
+    CPU_COUNT="$(sysctl -n hw.ncpu)"
+    (( JOBS <= CPU_COUNT )) || JOBS="$CPU_COUNT"
+fi
+BUILD_DIR="${BUILD_DIR:-$SOURCE_DIR/build-qt6-mac-arm}"
+mkdir -p "$BUILD_DIR"
+BUILD_DIR="$(cd "$BUILD_DIR" && pwd)"
+
+"$MAKE" -C depends BUILD="$BUILD" HOST="$HOST" OSX_MIN_VERSION="$OSX_MIN_VERSION" \
+    NO_PROTON=1 -j"$JOBS" "$@"
 ./autogen.sh
-# -Wno-deprecated-builtins -Wno-enum-constexpr-conversion
-CXXFLAGS="-g0 -O2 -Wno-unknown-warning-option" \
-CONFIG_SITE="$PWD/depends/aarch64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70 --host=aarch64-apple-darwin
-make -j$(sysctl -n hw.ncpu) # V=1
+cd "$BUILD_DIR"
+# CONFIGURE_FLAGS intentionally accepts a list of additional configure options.
+CONFIG_SITE="$SOURCE_DIR/depends/$HOST/share/config.site" \
+    "$SOURCE_DIR/configure" --build="$BUILD" --host="$HOST" \
+    --disable-tests --disable-bench --disable-bip70 --with-gui=qt6 \
+    ${CONFIGURE_FLAGS:-} CXXFLAGS="${CXXFLAGS:--O2 -g0}"
+"$MAKE" -j"$JOBS" "$@"
+"$MAKE" -j"$JOBS" appbundle OSX_APP=KmdClassic-Qt.app
+# Seal the completed bundle for local use without a Developer ID certificate.
+codesign --force --sign - "$BUILD_DIR/KmdClassic-Qt.app"
