@@ -157,3 +157,19 @@ LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
 LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
   xvfb-run -a build-qt6-linux/src/qt/test/viewnotes_tests --gui
 ```
+
+The shutdown regression test checks RPC timer cancellation across threads and
+GUI exit after core shutdown. In Qt 6, `quit()` can be vetoed by a window's
+close handler; the shutdown-status window deliberately rejects close requests.
+The application's shutdown-completion slot therefore exits the GUI event loop
+directly after the core has stopped. RPC timer objects are cleaned up in their
+owning Qt thread, even if their RPC handles are released after that thread exits.
+
+```sh
+make -C build-qt6-linux/src -j8 qt/test/shutdown_tests
+LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
+  xvfb-run -a build-qt6-linux/src/qt/test/shutdown_tests
+```
+
+This test exercises the application's completion slot and shutdown window
+without starting a node or opening wallet files.

@@ -608,7 +608,11 @@ void KomodoApplication::initializeResult(bool success)
 
 void KomodoApplication::shutdownResult()
 {
-    quit(); // Exit main loop after shutdown finished
+    // Qt 6 quit() asks every visible window to close. ShutdownWindow rejects
+    // close events while the core is stopping, which would veto this request.
+    // The core has now finished; exit the GUI event loop directly on its thread.
+    shutdownWindow.reset();
+    QCoreApplication::exit(0);
 }
 
 void KomodoApplication::handleRunawayException(const QString &message)
