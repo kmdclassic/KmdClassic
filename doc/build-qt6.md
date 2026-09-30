@@ -172,4 +172,7 @@ LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
 ```
 
 This test exercises the application's completion slot and shutdown window
-without starting a node or opening wallet files.
+without starting a node or opening wallet files. It also checks failed startup
+with a visible splash screen, as happens when the data directory is already
+locked: the splash must be released, the startup event loop must exit so normal
+shutdown can run, and the process failure status must be preserved.
