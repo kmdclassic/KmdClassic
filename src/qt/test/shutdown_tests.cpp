@@ -4,6 +4,7 @@
 #include "qtrpctimer.h"
 
 #include <QCloseEvent>
+#include <QPointer>
 #include <QSemaphore>
 #include <QTemporaryDir>
 
@@ -78,6 +79,7 @@ static void checkTimers()
 int main()
 {
     fPrintToDebugLog = false;
+    Q_INIT_RESOURCE(komodo);
     QTemporaryDir settings;
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settings.path());
@@ -108,7 +110,35 @@ int main()
         timeout.start(3000);
         QTimer::singleShot(0, &app, &KomodoApplication::shutdownResult);
         require(app.exec() == 0 && !timedOut, "shutdown completion failed to exit the GUI event loop");
+        timeout.stop();
+        window.hide();
         std::puts("Shutdown: protected window and application completion passed");
+
+        // An initialization failure (such as an occupied data directory) must
+        // leave the first event loop so main() can run the normal cleanup path.
+        std::unique_ptr<const NetworkStyle> style(NetworkStyle::instantiate("regtest"));
+        app.createSplashScreen(style.get());
+        QPointer<SplashScreen> splash;
+        for (auto* widget : QApplication::topLevelWidgets()) {
+            if (auto* candidate = qobject_cast<SplashScreen*>(widget)) splash = candidate;
+        }
+        require(splash && splash->isVisible(), "startup failure test has no visible splash screen");
+        timedOut = false;
+        timeout.start(3000);
+        QTimer::singleShot(0, &app, [&] { app.initializeResult(false); });
+        require(app.exec() == EXIT_FAILURE && !timedOut,
+                "initialization failure remained in the GUI event loop");
+        timeout.stop();
+        require(app.getReturnValue() == EXIT_FAILURE, "initialization failure lost its process exit status");
+        require(!splash || !splash->isVisible(), "initialization failure left the splash visible");
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        require(!splash, "initialization failure did not release the splash screen");
+        timedOut = false;
+        timeout.start(3000);
+        QTimer::singleShot(0, &app, &KomodoApplication::shutdownResult);
+        require(app.exec() == 0 && !timedOut && app.getReturnValue() == EXIT_FAILURE,
+                "cleanup after initialization failure did not preserve the failure status");
+        std::puts("Startup failure: splash cleanup, event-loop exit and failure status passed");
     } catch (const std::exception& e) {
         std::fprintf(stderr, "Shutdown regression: %s\n", e.what());
         return 1;

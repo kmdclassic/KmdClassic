@@ -602,7 +602,11 @@ void KomodoApplication::initializeResult(bool success)
         QTimer::singleShot(100, paymentServer, SLOT(uiReady()));
 #endif
     } else {
-        quit(); // Exit main loop
+        // The splash screen rejects close events, so Qt 6 quit() can be
+        // vetoed here (e.g. after a data-directory lock error). Finish it
+        // explicitly and leave the startup loop so main() can run shutdown.
+        Q_EMIT splashFinished(nullptr);
+        QCoreApplication::exit(EXIT_FAILURE);
     }
 }
 
