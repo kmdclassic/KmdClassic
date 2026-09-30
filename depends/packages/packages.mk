@@ -9,6 +9,9 @@ qt_linux_packages:=qt6 qt6_translations libxcb_util_cursor expat libxcb xcb_prot
 qt_android_packages=qt
 
 qt_darwin_packages=qt
+ifeq ($(build_os)_$(host_arch),darwin_aarch64)
+qt_darwin_packages=qt6 qt6_translations
+endif
 qt_mingw32_packages=qt6 qt6_translations
 
 
@@ -96,4 +99,7 @@ endif
 
 ifneq ($(filter linux mingw32,$(host_os)),)
 qt_native_packages += native_qt6 native_meson native_ninja
+endif
+ifeq ($(build_os)_$(host_arch)_$(host_os),darwin_aarch64_darwin)
+qt_native_packages += native_qt6
 endif

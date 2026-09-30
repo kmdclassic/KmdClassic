@@ -642,6 +642,8 @@ fi
 
 dnl this flag screws up non-darwin gcc even when the check fails. special-case it.
 if test x$TARGET_OS = xdarwin; then
+  dnl Keep the existing wallet and peer-address shuffles with modern libc++.
+  CPPFLAGS="$CPPFLAGS -D_LIBCPP_ENABLE_CXX17_REMOVED_RANDOM_SHUFFLE"
   AX_CHECK_LINK_FLAG([[-Wl,-dead_strip]], [LDFLAGS="$LDFLAGS -Wl,-dead_strip"])
 fi
 
@@ -730,11 +732,6 @@ if test x$use_boost = xyes; then
 
 dnl Check for boost libs
 AX_BOOST_BASE
-AX_BOOST_SYSTEM
-AX_BOOST_FILESYSTEM
-AX_BOOST_PROGRAM_OPTIONS
-AX_BOOST_THREAD
-AX_BOOST_CHRONO
 
 dnl Prevent use of std::unary_function, which was removed in C++17,
 dnl and will generate warnings with newer compilers for Boost
@@ -746,6 +743,14 @@ AX_CHECK_PREPROC_FLAG([-D_HAS_AUTO_PTR_ETC=0], [BOOST_CPPFLAGS="$BOOST_CPPFLAGS 
                       [AC_LANG_PROGRAM([[#include <boost/config.hpp>]])])
 AX_CHECK_PREPROC_FLAG([-DBOOST_NO_CXX98_FUNCTION_BASE], [BOOST_CPPFLAGS="$BOOST_CPPFLAGS -DBOOST_NO_CXX98_FUNCTION_BASE"], [], [$CXXFLAG_WERROR],
                       [AC_LANG_PROGRAM([[#include <boost/config.hpp>]])])
+
+dnl Apply the C++17 compatibility flags before probing Boost components.
+dnl Modern libc++ no longer provides std::unary_function.
+AX_BOOST_SYSTEM
+AX_BOOST_FILESYSTEM
+AX_BOOST_PROGRAM_OPTIONS
+AX_BOOST_THREAD
+AX_BOOST_CHRONO
 
 if test x$use_reduce_exports = xyes; then
   AC_MSG_CHECKING([for working boost reduced exports])
@@ -1132,6 +1137,14 @@ fi
 if test x$build_komodo_utils$build_komodo_libs$build_komodod$use_tests = xnononono; then
   AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-libs --with-daemon or --enable-tests])
 fi
+
+MACOSX_MIN_VERSION="${MACOSX_DEPLOYMENT_TARGET:-10.12.0}"
+MACOSX_BUNDLE_ARCH="$host_cpu"
+case "$host_cpu" in
+  aarch64) MACOSX_BUNDLE_ARCH=arm64 ;;
+esac
+AC_SUBST(MACOSX_MIN_VERSION)
+AC_SUBST(MACOSX_BUNDLE_ARCH)
 
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])

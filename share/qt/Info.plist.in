@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
   <key>LSMinimumSystemVersion</key>
-  <string>10.12.0</string>
+  <string>@MACOSX_MIN_VERSION@</string>
 
   <key>LSArchitecturePriority</key>
   <array>
-    <string>x86_64</string>
+    <string>@MACOSX_BUNDLE_ARCH@</string>
   </array>
 
   <key>CFBundleIconFile</key>

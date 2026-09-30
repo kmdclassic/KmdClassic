@@ -437,6 +437,7 @@ AC_DEFUN([_BITCOIN_QT6_CONFIGURE],[
   QT_PIE_FLAGS=$PIC_FLAGS
   MOC_DEFS='-DHAVE_CONFIG_H -I$(srcdir)'
   case $host in
+    *darwin*) MOC_DEFS="${MOC_DEFS} -DQ_OS_MAC" ;;
     *mingw*) QT_LDFLAGS="$QT_LDFLAGS -mwindows" ;;
   esac
   AC_SUBST(QT_SELECT)

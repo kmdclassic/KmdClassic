@@ -30,6 +30,9 @@ $(package)_config_opts_linux+=-DFEATURE_fontconfig=ON -DFEATURE_system_freetype=
 $(package)_config_opts_linux+=-DFEATURE_dbus=ON -DFEATURE_dbus_linked=OFF
 $(package)_config_opts_linux+=-DFEATURE_eglfs=OFF -DFEATURE_linuxfb=OFF -DFEATURE_evdev=OFF
 $(package)_config_opts_linux+=-DFEATURE_libinput=OFF -DFEATURE_libudev=OFF -DFEATURE_gtk3=OFF
+$(package)_config_opts_darwin=-DQT_FORCE_FIND_TOOLS=OFF -DFEATURE_framework=OFF -DFEATURE_dbus=OFF
+$(package)_config_opts_darwin+=-DCMAKE_OSX_DEPLOYMENT_TARGET=$(OSX_MIN_VERSION)
+$(package)_config_opts_aarch64_darwin=-DCMAKE_OSX_ARCHITECTURES=arm64
 # GCC 10 MinGW ICEs in SEH unwind emission with -fstack-clash-protection.
 # Windows already uses stack probing; retain Qt's stack protector and CET.
 $(package)_config_opts_mingw32=-DFEATURE_stack_clash_protection=OFF -DFEATURE_dbus=OFF -DFEATURE_freetype=OFF

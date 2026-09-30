@@ -1,6 +1,6 @@
 # How to build? #
 
-Linux and MinGW-w64 GUI builds now use Qt 6.11.2 and C++17. See
+Linux, MinGW-w64 and native Apple Silicon GUI builds now use Qt 6.11.2 and C++17. See
 [the Qt 6 build instructions](doc/build-qt6.md) for prerequisites and separate
 build directories.
 
@@ -63,6 +63,11 @@ sudo apt-get install curl librsvg2-bin libtiff-tools bsdmainutils cmake imagemag
 Place prepared SDK file `Xcode-13.2.1-13C100-extracted-SDK-with-libcxx-headers.tar.gz` in repo root, use `build-mac-cross.sh` script to build.
 
 #### OSX (Native)
+For native Apple Silicon builds with Qt 6, use
+[`zcutil/build-mac-arm.sh`](zcutil/build-mac-arm.sh) and the
+[Apple Silicon instructions](doc/build-qt6.md#native-apple-silicon).
+The legacy Intel/Qt 5 instructions follow below.
+
 Ensure you have [brew](https://brew.sh) and Command Line Tools installed.
 ```shell
 # Install brew
@@ -121,5 +126,4 @@ cd komodo
 ./zcutil/build-win.sh -j8
 #This can take some time.
 ```
-
 

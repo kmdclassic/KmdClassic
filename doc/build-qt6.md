@@ -1,8 +1,9 @@
-# Qt 6 builds (Linux and MinGW-w64)
+# Qt 6 builds (Linux, MinGW-w64 and native Apple Silicon)
 
-Linux and Windows builds use Qt 6.11.2 from `depends`. Qt 6 requires C++17;
-GCC remains the compiler. The application is compiled with `-std=c++17`.
-The Qt 5.15.11 recipe remains available for the existing macOS/Android recipes.
+Linux, Windows and native Apple Silicon builds use Qt 6.11.2 from `depends`.
+Qt 6 requires C++17. Linux and Windows use GCC; native macOS uses Apple Clang.
+The application is compiled with `-std=c++17`. The Qt 5.15.11 recipe remains
+available for the existing Intel macOS, Linux-to-macOS cross-build and Android recipes.
 
 On Ubuntu/Debian, install the prerequisites listed in HOW-TO-BUILD.md and:
 
@@ -69,7 +70,7 @@ make -C build-qt6-windows -j8
 The `zcutil/build-qt.sh` and `zcutil/build-win.sh` scripts above still configure
 and build in the source tree; they do not create these separate directories.
 
-`native_qt6` builds Linux tools, including `moc`, `uic`, `rcc` and Linguist.
+`native_qt6` builds tools for the build machine, including `moc`, `uic`, `rcc` and Linguist.
 `qt6` builds the target libraries and plugins. This split allows cross-builds
 to execute native tools instead of Windows executables. `qt6_translations`
 compiles and installs the Qt translations.
@@ -110,6 +111,69 @@ above, with BIP70, tests and benchmarks disabled. The Linux wallet passed
 x86-64 GUI PE executable and imports only Windows system DLLs; Qt, libstdc++,
 libgcc, libssp and winpthreads are linked statically. Windows execution has
 not been tested in this Linux environment.
+
+## Native Apple Silicon
+
+Use an arm64 macOS shell, not Rosetta, with Xcode selected by `xcode-select`.
+Qt 6.11.2 requires a macOS SDK version of at least 14; the deployment target
+for this build is macOS 13.0 or later. Install the build tools:
+
+```sh
+brew install autoconf automake libtool pkg-config coreutils cmake make
+./zcutil/build-mac-arm.sh
+```
+
+The script also works from a non-interactive SSH session: it adds the standard
+Apple Silicon Homebrew paths before checking for build tools. It builds Qt and
+the other libraries through `depends`, using a stable
+`depends/aarch64-apple-darwin` prefix and the native arm64 Rust compiler.
+Berkeley DB 6.2.32 is selected for Apple Silicon by its recipe; the script
+does not edit dependency recipes or prompt to update them during a build.
+
+Application objects and executables are written to `build-qt6-mac-arm`,
+including `src/qt/kmdclassic-qt`. The script also creates `KmdClassic-Qt.app`
+there. The bundle records the deployment target and arm64 architecture and
+uses the generated plist from the build directory. Qt is linked statically,
+with the Cocoa platform plugin and native macOS widget style selected by
+the CMake link probe. The completed bundle receives an ad-hoc signature for
+local use; the script does not perform Developer ID signing or notarization.
+
+The application build passes the macOS platform define to `moc`, applies
+Boost's C++17 compatibility defines to the component probes and crypto/consensus
+libraries, and enables libc++'s compatibility switch for the existing
+`random_shuffle` calls.
+
+The default job count is limited by both CPU count and physical RAM
+(one job per 3 GiB, at least one). For example:
+
+```sh
+JOBS=2 ./zcutil/build-mac-arm.sh
+BUILD_DIR="$PWD/build-qt6-mac-arm-debug" CXXFLAGS='-O0 -g' ./zcutil/build-mac-arm.sh
+```
+
+`MAKE`, `JOBS`, `BUILD_DIR`, `OSX_MIN_VERSION`, `CXXFLAGS`, and `CONFIGURE_FLAGS`
+can be overridden. Additional arguments are forwarded to GNU Make for depends
+and the application. Subsequent application-only rebuilds can use
+`gmake -C build-qt6-mac-arm -j2`.
+
+Validated on an Apple M2 with macOS 26.4.1, Apple Clang 21.0.0 and SDK 26.4,
+using two build jobs. The GUI, daemon and CLI are arm64 Mach-O executables;
+the GUI imports only system libraries/frameworks. The app bundle passes
+`codesign --verify --strict`, and both the standalone GUI and bundle executable
+run with `-version`. The model-index/address creation, View Notes (including
+the GUI), RPC timer and shutdown/startup-failure regression tests pass natively.
+Full blockchain synchronization and operation on macOS 13 have not been tested.
+
+To run these regression tests after a native build:
+
+```sh
+gmake -C build-qt6-mac-arm/src -j2 qt/test/modelindex_tests qt/test/viewnotes_tests qt/test/shutdown_tests
+build-qt6-mac-arm/src/qt/test/modelindex_tests
+build-qt6-mac-arm/src/qt/test/viewnotes_tests --gui
+build-qt6-mac-arm/src/qt/test/shutdown_tests
+```
+
+## GUI regression tests on Linux
 
 The address-model regression test can also be built with the core tests disabled:
 
