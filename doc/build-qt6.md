@@ -91,3 +91,15 @@ above, with BIP70, tests and benchmarks disabled. The Linux wallet passed
 x86-64 GUI PE executable and imports only Windows system DLLs; Qt, libstdc++,
 libgcc, libssp and winpthreads are linked statically. Windows execution has
 not been tested in this Linux environment.
+
+The address-model regression test can also be built with the core tests disabled:
+
+```sh
+make -C build-qt6-linux/src -j8 qt/test/modelindex_tests
+LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
+  build-qt6-linux/src/qt/test/modelindex_tests
+```
+
+It uses an in-memory wallet and checks retained indexes and proxy selections
+while inserting, removing and updating transparent and shielded address rows.
+It does not access wallet files or require a display server.
