@@ -77,6 +77,7 @@ public:
     int lookupAddress(const QString &address) const;
 
     EditStatus getEditStatus() const { return editStatus; }
+    QString getEditError() const { return editError; }
 
 private:
     WalletModel *walletModel;
@@ -84,6 +85,7 @@ private:
     ZAddressTablePriv *priv;
     QStringList columns;
     EditStatus editStatus;
+    QString editError;
     const PlatformStyle *platformStyle;
 
     /** Notify listeners that data changed. */

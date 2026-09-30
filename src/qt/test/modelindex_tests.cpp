@@ -1,6 +1,12 @@
-// Regression coverage for indexes retained across address-list mutations.
+// Regression coverage for address indexes and shielded key creation.
 #include "addresstablemodel.h"
+#include "optionsmodel.h"
+#include "walletmodel.h"
 #include "zaddresstablemodel.h"
+#include "chainparams.h"
+#include "key_io.h"
+#include "util.h"
+#include "utiltime.h"
 #include "wallet/wallet.h"
 #include "ui_interface.h"
 
@@ -8,6 +14,10 @@
 #include <QItemSelectionModel>
 #include <QPersistentModelIndex>
 #include <QSortFilterProxyModel>
+#include <QSettings>
+#include <QTemporaryDir>
+
+#include <sodium.h>
 
 #include <cstdio>
 #include <stdexcept>
@@ -67,14 +77,105 @@ static void checkAddressIndexes(const char* name)
     std::printf("%s: retained indexes and proxy selection passed\n", name);
 }
 
+class TestWallet : public CWallet
+{
+public:
+    using CCryptoKeyStore::EncryptKeys;
+    bool unlockForTest(const CKeyingMaterial& key) { return CCryptoKeyStore::Unlock(key); }
+    bool failSeedRead = false;
+    bool GetHDSeed(HDSeed& seed) const override
+    {
+        return !failSeedRead && CCryptoKeyStore::GetHDSeed(seed);
+    }
+};
+
+static void checkZAddressCreation()
+{
+    {
+        CWallet wallet;
+        ZAddressTableModel model(nullptr, &wallet);
+        require(model.addRow(ZAddressTableModel::Receive, "", "").isEmpty(),
+                "missing HD seed should fail address creation");
+        require(model.getEditStatus() == ZAddressTableModel::KEY_GENERATION_FAILURE,
+                "missing HD seed should report a key generation error");
+        require(model.getEditError().contains("HD seed not found"), "failure reason was lost");
+        require(!wallet.HaveHDSeed() && wallet.mapZAddressBook.empty(),
+                "failure must not replace the seed or add an address");
+        wallet.GenerateNewSeed();
+        require(!model.addRow(ZAddressTableModel::Receive, "", "").isEmpty(),
+                "unencrypted wallet failed to create an address");
+        require(model.getEditStatus() == ZAddressTableModel::OK && model.getEditError().isEmpty(),
+                "successful retry retained an earlier error");
+    }
+
+    TestWallet wallet;
+    wallet.GenerateNewSeed();
+    // Test-only key; all generated wallet data stays in memory.
+    CKeyingMaterial key(32, 42);
+    require(wallet.EncryptKeys(key) && wallet.IsLocked(), "failed to set up encrypted wallet");
+
+    OptionsModel options;
+    WalletModel walletModel(nullptr, &wallet, &options);
+    ZAddressTableModel* model = walletModel.getZAddressTableModel();
+    int unlockRequests = 0;
+    bool allowUnlock = false;
+    QObject::connect(&walletModel, &WalletModel::requireUnlock, [&] {
+        ++unlockRequests;
+        if (allowUnlock) require(wallet.unlockForTest(key), "test unlock failed");
+    });
+
+    require(model->addRow(ZAddressTableModel::Receive, "", "").isEmpty(),
+            "cancelled unlock should fail address creation");
+    require(unlockRequests == 1 && model->getEditStatus() == ZAddressTableModel::WALLET_UNLOCK_FAILURE,
+            "cancelled unlock was not reported");
+    require(wallet.IsLocked() && wallet.mapZAddressBook.empty(), "cancelled unlock changed wallet");
+
+    allowUnlock = true;
+    const QString first = model->addRow(ZAddressTableModel::Receive, "", "");
+    require(!first.isEmpty() && model->getEditStatus() == ZAddressTableModel::OK,
+            "encrypted wallet failed to create an address after unlock");
+    require(unlockRequests == 2 && wallet.IsLocked(), "wallet was not relocked after key creation");
+    const auto decoded = DecodePaymentAddress(first.toStdString());
+    require(boost::get<libzcash::SaplingPaymentAddress>(&decoded) != nullptr &&
+            wallet.mapZAddressBook.count(decoded) == 1, "Sapling address was not added to address book");
+
+    require(wallet.unlockForTest(key), "test unlock failed");
+    require(bool(boost::apply_visitor(GetSpendingKeyForPaymentAddress(&wallet), decoded)),
+            "created address has no decryptable spending key");
+    const QString second = model->addRow(ZAddressTableModel::Receive, "", "");
+    require(!second.isEmpty() && second != first, "unlocked wallet failed to create a distinct address");
+    require(unlockRequests == 2 && !wallet.IsLocked(), "already unlocked wallet changed lock state");
+
+    require(wallet.Lock(), "test lock failed");
+    wallet.failSeedRead = true;
+    require(model->addRow(ZAddressTableModel::Receive, "", "").isEmpty() &&
+            model->getEditStatus() == ZAddressTableModel::KEY_GENERATION_FAILURE,
+            "key generation exception escaped or reported success");
+    require(unlockRequests == 3 && wallet.IsLocked() && wallet.mapZAddressBook.size() == 2,
+            "failed generation must relock the wallet without adding an address");
+    std::puts("Z-address creation: missing seed, retry, cancelled unlock, unlock and relock on success/failure passed");
+}
+
 int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
+    QTemporaryDir settingsDir;
+    QCoreApplication::setOrganizationName("KmdClassicTests");
+    QCoreApplication::setApplicationName("AddressModels");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settingsDir.path());
+    fPrintToDebugLog = false;
+    fPrintToConsole = true;
     try {
+        require(settingsDir.isValid(), "failed to create temporary settings directory");
+        require(sodium_init() >= 0, "sodium initialization failed");
+        SelectParams(CBaseChainParams::REGTEST);
+        SetMockTime(1800000000); // Exercise Sapling independently of the wall clock.
         checkAddressIndexes<ZAddressTableModel>("Z-address model");
         checkAddressIndexes<AddressTableModel>("Address model");
+        checkZAddressCreation();
     } catch (const std::exception& e) {
-        std::fprintf(stderr, "Model index regression: %s\n", e.what());
+        std::fprintf(stderr, "Address model regression: %s\n", e.what());
         return 1;
     }
     return 0;

@@ -124,7 +124,8 @@ void EditZAddressDialog::accept()
             break;
         case ZAddressTableModel::KEY_GENERATION_FAILURE:
             QMessageBox::critical(this, windowTitle(),
-                tr("New key generation failed."),
+                tr("New key generation failed.") + (model->getEditError().isEmpty() ?
+                    QString() : "\n\n" + model->getEditError()),
                 QMessageBox::Ok, QMessageBox::Ok);
             break;
 
