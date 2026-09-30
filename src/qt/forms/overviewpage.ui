@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="topLayout">
+  <layout class="QVBoxLayout" name="topLayout" stretch="0,1,0">
    <item>
     <widget class="QLabel" name="labelAlerts">
      <property name="visible">
@@ -609,6 +609,87 @@
       </layout>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="donationBanner">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QHBoxLayout" name="donationBannerLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>6</number>
+      </property>
+      <property name="rightMargin">
+       <number>8</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="donationBannerText">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Help keep KMD Classic running. Support infrastructure and development.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="donationBannerLink">
+        <property name="toolTip">
+         <string>Support KMD Classic infrastructure and development</string>
+        </property>
+        <property name="text">
+         <string>Donate</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::RichText</enum>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::LinksAccessibleByKeyboard</set>
+        </property>
+        <property name="openExternalLinks">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="dismissDonationBanner">
+        <property name="minimumSize">
+         <size><width>24</width><height>24</height></size>
+        </property>
+        <property name="maximumSize">
+         <size><width>24</width><height>24</height></size>
+        </property>
+        <property name="toolTip">
+         <string>Dismiss donation reminder</string>
+        </property>
+        <property name="accessibleName">
+         <string>Dismiss donation reminder</string>
+        </property>
+        <property name="text">
+         <string notr="true">×</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
