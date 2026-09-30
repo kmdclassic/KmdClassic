@@ -19,6 +19,8 @@
 #include <QFont>
 #include <QDebug>
 
+#include <exception>
+
 const QString ZAddressTableModel::Send = "S";
 const QString ZAddressTableModel::Receive = "R";
 
@@ -179,7 +181,7 @@ public:
 };
 
 ZAddressTableModel::ZAddressTableModel(const PlatformStyle *_platformStyle, CWallet *_wallet, WalletModel *parent) :
-    QAbstractTableModel(parent),walletModel(parent),wallet(_wallet),priv(0),platformStyle(_platformStyle)
+    QAbstractTableModel(parent),walletModel(parent),wallet(_wallet),priv(0),editStatus(OK),platformStyle(_platformStyle)
 {
     columns << tr("Mine") << tr("Balance") << tr("Label") << tr("Address");
     priv = new ZAddressTablePriv(wallet, this);
@@ -410,55 +412,77 @@ void ZAddressTableModel::updateEntry(const QString &address,
 
 QString ZAddressTableModel::addRow(const QString &type, const QString &label, const QString &address)
 {
-    std::string strLabel; // = label.toStdString();
-    std::string strAddress = address.toStdString();
-
     editStatus = OK;
+    editError.clear();
 
-    if(type == Send)
-    {
-//!!!!! validate
-//        if(!walletModel->validateAddress(address))
-//        {
-//            editStatus = INVALID_ADDRESS;
-//            return QString();
-//        }
-        // Check for duplicate addresses
+    try {
+        std::string strLabel; // = label.toStdString();
+        std::string strAddress = address.toStdString();
+
+        if(type == Send)
         {
-            LOCK(wallet->cs_wallet);
-            if(wallet->mapZAddressBook.count(DecodePaymentAddress(strAddress)))
+    //!!!!! validate
+    //        if(!walletModel->validateAddress(address))
+    //        {
+    //            editStatus = INVALID_ADDRESS;
+    //            return QString();
+    //        }
+            // Check for duplicate addresses
             {
-                editStatus = DUPLICATE_ADDRESS;
-                return QString();
+                LOCK(wallet->cs_wallet);
+                if(wallet->mapZAddressBook.count(DecodePaymentAddress(strAddress)))
+                {
+                    editStatus = DUPLICATE_ADDRESS;
+                    return QString();
+                }
             }
         }
-    }
-    else if(type == Receive)
-    {
-        // Generate a new address to associate with given label
-        if ( GetTime() < KOMODO_SAPLING_ACTIVATION )
+        else if(type == Receive)
         {
-            strAddress = EncodePaymentAddress(wallet->GenerateNewSproutZKey());
-            strLabel = "z-sprout";
+            // Shielded keys need the unlocked seed; unlike transparent addresses,
+            // they cannot be taken from a pre-generated key pool. Request unlock
+            // before taking cs_wallet, and restore the previous lock state on exit.
+            WalletModel::UnlockContext ctx(walletModel ? walletModel->requestUnlock() :
+                                          WalletModel::UnlockContext(nullptr, !wallet->IsLocked(), false));
+            if (!ctx.isValid())
+            {
+                editStatus = WALLET_UNLOCK_FAILURE;
+                return QString();
+            }
+            LOCK(wallet->cs_wallet);
+            // Generate a new address to associate with given label
+            if ( GetTime() < KOMODO_SAPLING_ACTIVATION )
+            {
+                strAddress = EncodePaymentAddress(wallet->GenerateNewSproutZKey());
+                strLabel = "z-sprout";
+            }
+            else
+            {
+                strAddress = EncodePaymentAddress(wallet->GenerateNewSaplingZKey());
+                strLabel = "z-sapling";
+            }
         }
-        else 
+        else
         {
-            strAddress = EncodePaymentAddress(wallet->GenerateNewSaplingZKey());
-            strLabel = "z-sapling";
+            return QString();
         }
-    }
-    else
-    {
-        return QString();
-    }
 
-    // Add entry
-    {
-        LOCK(wallet->cs_wallet);
-        wallet->SetZAddressBook(DecodePaymentAddress(strAddress), strLabel,
-                               (type == Send ? "send" : "receive"));
+        // Add entry
+        {
+            LOCK(wallet->cs_wallet);
+            wallet->SetZAddressBook(DecodePaymentAddress(strAddress), strLabel,
+                                   (type == Send ? "send" : "receive"));
+        }
+        return QString::fromStdString(strAddress);
+    } catch (const std::exception& e) {
+        editError = QString::fromUtf8(e.what());
+        LogPrintf("GUI: Z-address creation failed: %s\n", e.what());
+    } catch (...) {
+        editError = tr("Unknown error while creating a Z-address.");
+        LogPrintf("GUI: Z-address creation failed: unknown exception\n");
     }
-    return QString::fromStdString(strAddress);
+    editStatus = KEY_GENERATION_FAILURE;
+    return QString();
 }
 
 bool ZAddressTableModel::removeRows(int row, int count, const QModelIndex &parent)

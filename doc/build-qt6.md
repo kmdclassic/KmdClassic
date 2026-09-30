@@ -102,4 +102,7 @@ LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
 
 It uses an in-memory wallet and checks retained indexes and proxy selections
 while inserting, removing and updating transparent and shielded address rows.
-It does not access wallet files or require a display server.
+It also exercises Sapling address creation with unencrypted and encrypted wallets,
+cancelled unlock requests, restoration of the lock state on success and failure,
+and error reporting when the HD seed cannot be read. It does not access wallet
+files or require a display server; Qt settings are isolated in a temporary directory.
