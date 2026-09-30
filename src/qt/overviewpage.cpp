@@ -7,6 +7,7 @@
 
 #include "komodounits.h"
 #include "clientmodel.h"
+#include "donatedialog.h"
 #include "guiconstants.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
@@ -127,6 +128,23 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     txdelegate(new TxViewDelegate(platformStyle, this))
 {
     ui->setupUi(this);
+
+    const QColor bannerColor = platformStyle->SingleColor();
+    ui->donationBanner->setStyleSheet(QStringLiteral(
+        "QFrame#donationBanner { background-color: %1; border: 1px solid %2; border-radius: 4px; }"
+        "QFrame#donationBanner QLabel { color: white; background: transparent; border: none; }"
+        "QToolButton#dismissDonationBanner { color: white; background: transparent; border: 1px solid transparent; border-radius: 3px; font-size: 18px; }"
+        "QToolButton#dismissDonationBanner:hover { background-color: %3; }"
+        "QToolButton#dismissDonationBanner:focus { border-color: white; }")
+        .arg(bannerColor.name(), bannerColor.darker(120).name(), bannerColor.lighter(120).name()));
+    ui->donationBannerLink->setText(QStringLiteral("<a href=\"donate\" style=\"color: white; font-weight: bold;\">%1</a>")
+                                  .arg(tr("Donate").toHtmlEscaped()));
+    connect(ui->donationBannerLink, &QLabel::linkActivated, this, [this](const QString&) {
+        DonateDialog dialog(this);
+        dialog.exec();
+    });
+    // Dismiss for this session; Help > Donate remains available.
+    connect(ui->dismissDonationBanner, &QToolButton::clicked, ui->donationBanner, &QWidget::hide);
 
     // use a SingleColorIcon for the "out of sync warning" icon
     QIcon icon = platformStyle->SingleColorIcon(":/icons/warning");
