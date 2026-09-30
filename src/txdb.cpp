@@ -715,8 +715,24 @@ bool CBlockTreeDB::blockOnchainActive(const uint256 &hash) {
     return true;
 }
 
-bool CBlockTreeDB::LoadBlockIndexGuts()
+bool CBlockTreeDB::LoadBlockIndexGuts(bool reserveBlockIndex)
 {
+    if (reserveBlockIndex) {
+        int lastFile;
+        CBlockFileInfo fileInfo;
+        if (ReadLastBlockFile(lastFile) && lastFile >= 0 &&
+            ReadBlockFileInfo(lastFile, fileInfo) && fileInfo.nBlocks > 0) {
+            // Estimate the main chain size without scanning the block index.
+            // Leave room for side branches; missing metadata or an underestimate
+            // is harmless because the map can still grow normally.
+            const uint64_t chainSize = uint64_t(fileInfo.nHeightLast) + 1;
+            const uint64_t reserveSize = chainSize + chainSize / 10;
+            if (reserveSize > mapBlockIndex.size() && reserveSize <= mapBlockIndex.max_size()) {
+                mapBlockIndex.reserve(static_cast<size_t>(reserveSize));
+            }
+        }
+    }
+
     boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(make_pair(DB_BLOCK_INDEX, uint256()));

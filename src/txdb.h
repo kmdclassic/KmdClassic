@@ -275,9 +275,11 @@ public:
     /****
      * Load the block headers from disk
      * NOTE: this does no consistency check beyond verifying records exist
+     * @param reserveBlockIndex preallocate the map from block file metadata;
+     *        disable to benchmark the original allocation behavior
      * @returns true on success
      */
-    bool LoadBlockIndexGuts();
+    bool LoadBlockIndexGuts(bool reserveBlockIndex = true);
     bool LoadBlockIndexGutsFast();
     /****
      * Check if a block is on the active chain
