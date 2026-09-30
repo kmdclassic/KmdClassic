@@ -104,6 +104,7 @@ private:
     QAction *signMessageAction;
     QAction *verifyMessageAction;
     QAction *aboutAction;
+    QAction *donateAction;
     QAction *receiveCoinsAction;
     QAction *receiveCoinsMenuAction;
     QAction *optionsAction;
@@ -224,6 +225,8 @@ private Q_SLOTS:
     void optionsClicked();
     /** Show about dialog */
     void aboutClicked();
+    /** Show community support information and donation addresses. */
+    void donateClicked();
     /** Show debug window */
     void showDebugWindow();
     /** Show debug window and set focus to the console */
