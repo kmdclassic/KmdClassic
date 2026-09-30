@@ -10,6 +10,7 @@
 
 #include "komodounits.h"
 #include "clientmodel.h"
+#include "donatedialog.h"
 #include "guiconstants.h"
 #include "guiutil.h"
 #include "modaloverlay.h"
@@ -108,6 +109,7 @@ KomodoOceanGUI::KomodoOceanGUI(const PlatformStyle *_platformStyle, const Networ
     signMessageAction(0),
     verifyMessageAction(0),
     aboutAction(0),
+    donateAction(0),
     receiveCoinsAction(0),
     receiveCoinsMenuAction(0),
     optionsAction(0),
@@ -365,6 +367,10 @@ void KomodoOceanGUI::createActions()
     aboutAction->setStatusTip(tr("Show information about %1").arg(tr(PACKAGE_NAME)));
     aboutAction->setMenuRole(QAction::AboutRole);
     aboutAction->setEnabled(false);
+    donateAction = new QAction(tr("&Donate..."), this);
+    donateAction->setObjectName("donateAction");
+    donateAction->setMenuRole(QAction::NoRole);
+    donateAction->setStatusTip(tr("Support KMD Classic infrastructure and development"));
     aboutQtAction = new QAction(platformStyle->TextColorIcon(":/icons/about_qt"), tr("About &Qt"), this);
     aboutQtAction->setStatusTip(tr("Show information about Qt"));
     aboutQtAction->setMenuRole(QAction::AboutQtRole);
@@ -428,6 +434,7 @@ void KomodoOceanGUI::createActions()
 
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
+    connect(donateAction, &QAction::triggered, this, &KomodoOceanGUI::donateClicked);
     connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
@@ -507,6 +514,7 @@ void KomodoOceanGUI::createMenuBar()
     help->addAction(openWebsiteAction);
     help->addAction(openTelegramAction);
     help->addAction(openDiscordAction);
+    help->addAction(donateAction);
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
@@ -725,6 +733,12 @@ void KomodoOceanGUI::aboutClicked()
 
     HelpMessageDialog dlg(this, true);
     dlg.exec();
+}
+
+void KomodoOceanGUI::donateClicked()
+{
+    DonateDialog dialog(this);
+    dialog.exec();
 }
 
 void KomodoOceanGUI::showDebugWindow()
