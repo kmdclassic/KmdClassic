@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <QObject>
+#include <QByteArray>
 
 class AddressTableModel;
 class ZAddressTableModel;
@@ -253,6 +254,23 @@ public:
     bool getDefaultWalletRbf() const;
     std::map<CTxDestination, CAmount> getTAddressBalances();
     std::map<libzcash::PaymentAddress, CAmount> getZAddressBalances();
+    struct SaplingNoteInfo {
+        QString address;
+        QString label;
+        QString txid;
+        unsigned int outputIndex;
+        CAmount amount;
+        int confirmations;
+        int rawConfirmations;
+        bool hasSpendingKey;
+        bool locked;
+        bool spentStatusKnown;
+        bool change;
+        QByteArray memo;
+    };
+    // Includes unconfirmed, locked and watch-only notes, excludes known spends.
+    // Viewing keys suffice; this never unlocks or modifies the wallet.
+    std::vector<SaplingNoteInfo> getSaplingNotes() const;
     CAmount getAddressBalance(const std::string &sAddress);
 
 private:

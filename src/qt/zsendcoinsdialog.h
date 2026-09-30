@@ -72,6 +72,7 @@ private:
 
 private Q_SLOTS:
     void on_sendButton_clicked();
+    void on_viewNotesButton_clicked();
     void removeEntry(SendCoinsEntry* entry);
     void useAvailableBalance(SendCoinsEntry* entry);
     void updateDisplayUnit();

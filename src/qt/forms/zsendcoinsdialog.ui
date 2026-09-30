@@ -67,7 +67,7 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayoutCoinControl1">
           <property name="rightMargin">
-           <number>0</number>
+           <number>10</number>
           </property>
           <property name="bottomMargin">
            <number>10</number>
@@ -91,6 +91,29 @@
             </property>
             <property name="text">
              <string>Pay From:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="notesSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size><width>20</width><height>20</height></size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="viewNotesButton">
+            <property name="text">
+             <string>View Notes...</string>
+            </property>
+            <property name="toolTip">
+             <string>View Sapling notes in this wallet</string>
+            </property>
+            <property name="autoDefault">
+             <bool>false</bool>
             </property>
            </widget>
           </item>

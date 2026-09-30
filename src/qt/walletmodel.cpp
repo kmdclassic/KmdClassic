@@ -34,12 +34,14 @@
 #include "wallet/walletdb.h" // for BackupWallet
 #include "key_io.h"
 #include "komodo_defs.h"
+#include "komodo_notary.h"
 #include "utilmoneystr.h"
 #include "asyncrpcoperation.h"
 #include "asyncrpcqueue.h"
 #include "rpc/server.h"
 
 #include <stdint.h>
+#include <limits>
 
 #include <QDebug>
 #include <QMessageBox>
@@ -1144,6 +1146,44 @@ std::map<libzcash::PaymentAddress, CAmount> WalletModel::getZAddressBalances()
     }
     
     return balances;
+}
+
+std::vector<WalletModel::SaplingNoteInfo> WalletModel::getSaplingNotes() const
+{
+    LOCK2(cs_main, wallet->cs_wallet);
+    std::vector<SaplingNoteInfo> result;
+    std::set<libzcash::SaplingPaymentAddress> addresses;
+    wallet->GetSaplingPaymentAddresses(addresses);
+    // An empty GetFilteredNotes filter means all pools, including Sprout.
+    if (addresses.empty()) return result;
+    std::set<libzcash::PaymentAddress> filter(addresses.begin(), addresses.end());
+    std::vector<CSproutNotePlaintextEntry> sprout;
+    std::vector<SaplingNoteEntry> notes;
+    wallet->GetFilteredNotes(sprout, notes, filter, 0, std::numeric_limits<int>::max(), true, false, false);
+    const auto nullifiers = wallet->GetNullifiersForAddresses(filter);
+    result.reserve(notes.size());
+    for (const auto& note : notes) {
+        SaplingNoteInfo info;
+        info.address = QString::fromStdString(EncodePaymentAddress(note.address));
+        const auto label = wallet->mapZAddressBook.find(note.address);
+        if (label != wallet->mapZAddressBook.end()) info.label = QString::fromStdString(label->second.name);
+        info.txid = QString::fromStdString(note.op.hash.ToString());
+        info.outputIndex = note.op.n;
+        info.amount = CAmount(note.note.value());
+        info.rawConfirmations = note.confirmations;
+        const int height = note.confirmations > 0 ? chainActive.Height() - note.confirmations + 1 : 0;
+        info.confirmations = komodo_dpowconfs(height, note.confirmations);
+        info.hasSpendingKey = boost::apply_visitor(HaveSpendingKeyForPaymentAddress(wallet),
+                                                  libzcash::PaymentAddress(note.address));
+        info.locked = wallet->IsLockedNote(note.op);
+        const auto& data = wallet->mapWallet.at(note.op.hash).mapSaplingNoteData.at(note.op);
+        info.spentStatusKnown = bool(data.nullifier);
+        // Match z_listunspent's change classification (only with a spending key).
+        info.change = info.hasSpendingKey && wallet->IsNoteSaplingChange(nullifiers, note.address, note.op);
+        info.memo = QByteArray(reinterpret_cast<const char*>(note.memo.data()), note.memo.size());
+        result.push_back(std::move(info));
+    }
+    return result;
 }
 
 CAmount WalletModel::getAddressBalance(const std::string &sAddress)

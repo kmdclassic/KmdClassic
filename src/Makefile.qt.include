@@ -159,6 +159,7 @@ QT_MOC_CPP = \
   qt/moc_rpcconsole.cpp \
   qt/moc_sendcoinsdialog.cpp \
   qt/moc_zsendcoinsdialog.cpp \
+  qt/moc_viewnotesdialog.cpp \
   qt/moc_sendcoinsentry.cpp \
   qt/moc_signverifymessagedialog.cpp \
   qt/moc_splashscreen.cpp \
@@ -243,6 +244,7 @@ KOMODO_QT_H = \
   qt/rpcconsole.h \
   qt/sendcoinsdialog.h \
   qt/zsendcoinsdialog.h \
+  qt/viewnotesdialog.h \
   qt/sendcoinsentry.h \
   qt/signverifymessagedialog.h \
   qt/splashscreen.h \
@@ -361,6 +363,7 @@ KOMODO_QT_WALLET_CPP = \
   qt/recentrequeststablemodel.cpp \
   qt/sendcoinsdialog.cpp \
   qt/zsendcoinsdialog.cpp \
+  qt/viewnotesdialog.cpp \
   qt/sendcoinsentry.cpp \
   qt/signverifymessagedialog.cpp \
   qt/transactiondesc.cpp \
@@ -489,7 +492,7 @@ qt_kmdclassic_qt_LIBTOOLFLAGS = --tag CXX
 
 if ENABLE_WALLET
 # Build explicitly even when the larger core test suite is disabled.
-EXTRA_PROGRAMS = qt/test/modelindex_tests
+EXTRA_PROGRAMS = qt/test/modelindex_tests qt/test/viewnotes_tests
 qt_test_modelindex_tests_SOURCES = qt/test/modelindex_tests.cpp
 qt_test_modelindex_tests_CPPFLAGS = $(qt_libkomodoqt_a_CPPFLAGS)
 qt_test_modelindex_tests_CXXFLAGS = $(qt_libkomodoqt_a_CXXFLAGS)
@@ -497,9 +500,15 @@ qt_test_modelindex_tests_LDADD = qt/libkomodoqt.a $(LIBBITCOIN_SERVER) \
   $(filter-out qt/libkomodoqt.a $(LIBBITCOIN_SERVER),$(qt_kmdclassic_qt_LDADD))
 qt_test_modelindex_tests_DEPENDENCIES = $(qt_kmdclassic_qt_DEPENDENCIES)
 qt_test_modelindex_tests_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+qt_test_viewnotes_tests_SOURCES = qt/test/viewnotes_tests.cpp
+qt_test_viewnotes_tests_CPPFLAGS = $(qt_test_modelindex_tests_CPPFLAGS)
+qt_test_viewnotes_tests_CXXFLAGS = $(qt_test_modelindex_tests_CXXFLAGS)
+qt_test_viewnotes_tests_LDADD = $(qt_test_modelindex_tests_LDADD)
+qt_test_viewnotes_tests_DEPENDENCIES = $(qt_test_modelindex_tests_DEPENDENCIES)
+qt_test_viewnotes_tests_LDFLAGS = $(qt_test_modelindex_tests_LDFLAGS)
 if ENABLE_TESTS
-check_PROGRAMS = qt/test/modelindex_tests
-TESTS += qt/test/modelindex_tests
+check_PROGRAMS = qt/test/modelindex_tests qt/test/viewnotes_tests
+TESTS += qt/test/modelindex_tests qt/test/viewnotes_tests
 endif
 endif
 

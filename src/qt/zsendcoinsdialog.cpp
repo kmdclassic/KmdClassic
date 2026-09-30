@@ -15,6 +15,7 @@
 #include "platformstyle.h"
 #include "sendcoinsentry.h"
 #include "walletmodel.h"
+#include "viewnotesdialog.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -46,6 +47,7 @@ ZSendCoinsDialog::ZSendCoinsDialog(const PlatformStyle *_platformStyle, QWidget 
     platformStyle(_platformStyle)
 {
     ui->setupUi(this);
+    ui->viewNotesButton->setEnabled(false);
 
     ui->payFromAddress->setMaxVisibleItems(10);
     ui->payFromAddress->setStyleSheet("QComboBox { combobox-popup: 0; }");
@@ -82,6 +84,7 @@ void ZSendCoinsDialog::setClientModel(ClientModel *_clientModel)
 void ZSendCoinsDialog::setModel(WalletModel *_model)
 {
     this->model = _model;
+    ui->viewNotesButton->setEnabled(_model && _model->getOptionsModel());
 
     if(_model && _model->getOptionsModel())
     {
@@ -114,6 +117,13 @@ void ZSendCoinsDialog::setModel(WalletModel *_model)
 ZSendCoinsDialog::~ZSendCoinsDialog()
 {
     delete ui;
+}
+
+void ZSendCoinsDialog::on_viewNotesButton_clicked()
+{
+    if (!model || !model->getOptionsModel()) return;
+    ViewNotesDialog dialog(model, this);
+    dialog.exec();
 }
 
 void ZSendCoinsDialog::on_sendButton_clicked()
@@ -344,7 +354,8 @@ QWidget *ZSendCoinsDialog::setupTabChain(QWidget *prev)
     QWidget::setTabOrder(ui->sendButton, ui->clearButton);
     QWidget::setTabOrder(ui->clearButton, ui->addButton);
     QWidget::setTabOrder(ui->addButton, ui->refreshPayFrom);
-    return ui->refreshPayFrom;
+    QWidget::setTabOrder(ui->refreshPayFrom, ui->viewNotesButton);
+    return ui->viewNotesButton;
 }
 
 void ZSendCoinsDialog::setAddress(const QString &address)
