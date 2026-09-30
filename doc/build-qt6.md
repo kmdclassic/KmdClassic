@@ -50,6 +50,25 @@ Run `make distclean` first if the source directory was previously configured.
 The executables are under `src/` (the wallet is under `src/qt/`) in the chosen
 build directory.
 
+This is an Autotools out-of-tree build: the directory from which `configure`
+is invoked becomes the application build directory. Running `../configure`
+inside `build-qt6-linux` generates Makefiles there; they read sources from the
+repository and write object files, generated files and executables into the
+build directory. The names `build-qt6-linux` and `build-qt6-windows` are arbitrary,
+not hardcoded settings. `CONFIG_SITE` selects dependency and toolchain settings;
+it does not select the build directory. Dependencies retain their own build
+directories under `depends`.
+
+Once configured, rebuild from the repository root with:
+
+```sh
+make -C build-qt6-linux -j8
+make -C build-qt6-windows -j8
+```
+
+The `zcutil/build-qt.sh` and `zcutil/build-win.sh` scripts above still configure
+and build in the source tree; they do not create these separate directories.
+
 `native_qt6` builds Linux tools, including `moc`, `uic`, `rcc` and Linguist.
 `qt6` builds the target libraries and plugins. This split allows cross-builds
 to execute native tools instead of Windows executables. `qt6_translations`
@@ -106,3 +125,35 @@ It also exercises Sapling address creation with unencrypted and encrypted wallet
 cancelled unlock requests, restoration of the lock state on success and failure,
 and error reporting when the HD seed cannot be read. It does not access wallet
 files or require a display server; Qt settings are isolated in a temporary directory.
+
+The Z-Send form includes a **View Notes** button. The dialog lists Sapling notes
+using the wallet's `GetFilteredNotes` API, as used by `z_listunspent`, with minimum
+confirmations zero and watch-only and locked notes included. Known spent notes
+and conflicted transactions are excluded. Viewing notes does not unlock the
+wallet or change transaction input selection.
+
+The columns show amount, address label, address, notarization-adjusted
+confirmations, status, change, transaction ID and Sapling output index.
+Confirmation tooltips also show raw block confirmations. The selected note's
+memo is displayed as plain UTF-8 text, or hex for binary data; the context menu
+can copy the full original memo as hex. Change uses the same classification as
+`z_listunspent`: the receiving address also spent notes in that transaction.
+It is shown as unknown for watch-only entries, matching the RPC's omission.
+Notes without a cached nullifier have an unknown spent status, so the listed
+total must not be interpreted as an available balance.
+
+For reference, `z_listunspent 0 9999999 true` returns unspent notes in both shielded
+pools, while `z_listreceivedbyaddress` also includes previously spent notes.
+The dialog is Sapling-only. Internal cryptographic fields (diversifier, note
+randomness, commitment, nullifier and witness) are not exposed in the dialog.
+
+The note-list tests use synthetic encrypted note outputs in an in-memory wallet:
+
+```sh
+make -C build-qt6-linux/src -j8 qt/test/viewnotes_tests
+LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
+  build-qt6-linux/src/qt/test/viewnotes_tests
+# Also check the dialog, sorting, filtering, memo display and refresh under Xvfb:
+LD_LIBRARY_PATH="$PWD/depends/x86_64-pc-linux-gnu/lib" \
+  xvfb-run -a build-qt6-linux/src/qt/test/viewnotes_tests --gui
+```
