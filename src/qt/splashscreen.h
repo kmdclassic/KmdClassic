@@ -10,6 +10,8 @@
 
 class CWallet;
 class NetworkStyle;
+class PlatformStyle;
+class QProgressBar;
 
 /** Class for the splashscreen with information of the running client.
  *
@@ -22,7 +24,7 @@ class SplashScreen : public QWidget
     Q_OBJECT
 
 public:
-    explicit SplashScreen(const NetworkStyle *networkStyle);
+    explicit SplashScreen(const NetworkStyle *networkStyle, const PlatformStyle *platformStyle);
     ~SplashScreen();
 
 protected:
@@ -35,6 +37,8 @@ public Q_SLOTS:
 
     /** Show message and progress */
     void showMessage(const QString &message, int alignment, const QColor &color);
+    /** Show determinate progress for the current startup stage. */
+    void showProgress(const QString &message, int progress);
 
 protected:
     bool eventFilter(QObject * obj, QEvent * ev);
@@ -51,6 +55,7 @@ private:
     QString curMessage;
     QColor curColor;
     int curAlignment;
+    QProgressBar *progressBar;
 
     QList<CWallet*> connectedWallets;
 };

@@ -14,6 +14,7 @@
 
 #include "guiutil.h"
 #include "networkstyle.h"
+#include "platformstyle.h"
 #include "ui_interface.h"
 #include "version.h"
 
@@ -24,10 +25,11 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QPainter>
+#include <QProgressBar>
 #include <QRadialGradient>
 #include <QScreen>
 
-SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
+SplashScreen::SplashScreen(const NetworkStyle *networkStyle, const PlatformStyle *platformStyle) :
     QWidget(), curAlignment(0)
 {
     // set reference point, paddings
@@ -51,7 +53,7 @@ SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
     QString font            = QApplication::font().toString();
 
     // create a bitmap according to device pixelratio
-    QSize splashSize(480*devicePixelRatio,320*devicePixelRatio);
+    QSize splashSize(480*devicePixelRatio,340*devicePixelRatio);
     pixmap = QPixmap(splashSize);
 
 #if QT_VERSION > 0x050100
@@ -133,6 +135,20 @@ SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
     setFixedSize(r.size());
     move(QGuiApplication::primaryScreen()->geometry().center() - r.center());
 
+    progressBar = new QProgressBar(this);
+    progressBar->setObjectName(QStringLiteral("splashProgressBar"));
+#if QT_CONFIG(accessibility)
+    progressBar->setAccessibleName(tr("Loading progress"));
+#endif
+    progressBar->setRange(0, 100);
+    progressBar->setTextVisible(false);
+    progressBar->setGeometry(10, height() - 14, width() - 20, 8);
+    progressBar->setStyleSheet(QStringLiteral(
+        "QProgressBar { border: none; border-radius: 4px; background-color: #dce3e6; }"
+        "QProgressBar::chunk { border-radius: 4px; background-color: %1; }")
+        .arg(platformStyle->SingleColor().name()));
+    progressBar->hide();
+
     subscribeToCoreSignals();
     installEventFilter(this);
 }
@@ -175,10 +191,13 @@ static void InitMessage(SplashScreen *splash, const std::string &message)
 
 static void ShowProgress(SplashScreen *splash, const std::string &title, int nProgress, bool resume_possible)
 {
-    InitMessage(splash, title + std::string("\n") +
+    nProgress = qBound(0, nProgress, 100);
+    const QString message = title.empty() ? QString() : QString::fromStdString(title + std::string("\n") +
             (resume_possible ? _("(press q to shutdown and continue later)")
                                 : _("press q to shutdown")) +
             strprintf("\n%d", nProgress) + "%");
+    QMetaObject::invokeMethod(splash, "showProgress", Qt::QueuedConnection,
+        Q_ARG(QString, message), Q_ARG(int, nProgress));
 }
 
 #ifdef ENABLE_WALLET
@@ -216,7 +235,17 @@ void SplashScreen::showMessage(const QString &message, int alignment, const QCol
     curMessage = message;
     curAlignment = alignment;
     curColor = color;
+    progressBar->hide();
     update();
+}
+
+void SplashScreen::showProgress(const QString &message, int progress)
+{
+    showMessage(message, Qt::AlignBottom | Qt::AlignHCenter, QColor(55, 55, 55));
+    if (!message.isEmpty()) {
+        progressBar->setValue(qBound(0, progress, 100));
+        progressBar->show();
+    }
 }
 
 void SplashScreen::paintEvent(QPaintEvent *event)
@@ -224,6 +253,8 @@ void SplashScreen::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.drawPixmap(0, 0, pixmap);
     QRect r = rect().adjusted(5, 5, -5, -5);
+    if (!progressBar->isHidden())
+        r.setBottom(progressBar->y() - 6);
     painter.setPen(curColor);
     painter.drawText(r, curAlignment, curMessage);
 }

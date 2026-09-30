@@ -473,7 +473,7 @@ void KomodoApplication::createWindow(const NetworkStyle *networkStyle)
 
 void KomodoApplication::createSplashScreen(const NetworkStyle *networkStyle)
 {
-    SplashScreen *splash = new SplashScreen(networkStyle);
+    SplashScreen *splash = new SplashScreen(networkStyle, platformStyle);
     // We don't hold a direct pointer to the splash screen after creation, but the splash
     // screen will take care of deleting itself when slotFinish happens.
     splash->show();
