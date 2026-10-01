@@ -12,25 +12,8 @@ While the Komodo assetchains provide advanced privacy features, the main KMD coi
 
 KomodoOcean is available on three OS platforms: `Windows`, `Linux`, and `macOS`.
 
-Use the default `static` branch and the following scripts in `./zcutil` to build, depending on your target platform and architecture:
-
-- **Linux**:
-  - `build.sh`: Native build for Linux.
-  - `build-no-qt.sh`: Native build for Linux, but without Qt (produces a daemon-only version).
-  - `build-aarch64-cross.sh`: Cross-compilation for ARM (aarch64) on Linux.
-
-- **Windows**:
-  - `build-win.sh`: Cross-compilation for Windows from a Linux environment.
-
-- **MacOS**:
-  - `build-mac.sh`: Native build for macOS (x86_64). Use on Intel-based Macs or run with `arch -x86_64 /bin/zsh` on Apple Silicon Macs.
-  - `build-mac-cross.sh`: Cross-compilation for macOS (x86_64) from a Linux environment; produces `Mach-O 64-bit x86_64 executable` binaries.
-  - `build-mac-arm.sh`: Native build for macOS aarch64. Use this on Apple Silicon Macs to produce `Mach-O 64-bit executable arm64` binaries.
-  - `build-mac-arm-cross.sh`: Cross-compilation for macOS aarch64 from a Linux environment.
-
-Or use the `static-experimental` branch to access the latest `nightly` features.
-
-**Note**: Cross-compiled `arm64` Darwin (macOS) binaries do not include a digital signature by default. To use these binaries on macOS, they must be [signed](https://github.com/DeckerSU/KomodoOcean/wiki/F.A.Q.#q-the-zsh-killed-message-appears-on-macos-when-running-a-aarch64-apple-darwin-cross-compiled-binary) before execution. Failure to sign these binaries may result in issues with macOS security settings, preventing them from running properly.
+This README describes the historical KomodoOcean project. For the maintained
+KmdClassic build configurations and scripts, see [HOW-TO-BUILD.md](HOW-TO-BUILD.md).
 
 Please note that the parent repository [ip-gpu/KomodoOcean](https://github.com/ip-gpu/KomodoOcean) is no longer maintained!
 

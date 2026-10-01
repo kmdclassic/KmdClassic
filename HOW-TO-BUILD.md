@@ -1,133 +1,186 @@
-# How to build? #
+# Building KmdClassic
 
-Linux, MinGW-w64 and native Apple Silicon GUI builds now use Qt 6.11.2 and C++17. See
-[the Qt 6 build instructions](doc/build-qt6.md) for prerequisites and separate
-build directories.
+The maintained build configurations are:
 
-There are several ways to build the daemon and wallet. All build scripts for various build options are located in `./zcutil`. For example:
+| Target | Build machine and toolchain | Script | Output |
+| --- | --- | --- | --- |
+| Linux x86_64, Qt 6 GUI | Ubuntu 22.04 x86_64, GCC 11.4 | `zcutil/build-qt.sh` | Wallet, daemon and command-line utilities |
+| Windows x86_64, Qt 6 GUI | Ubuntu 22.04 x86_64, MinGW-w64 8.0 / GCC 10 POSIX | `zcutil/build-win.sh` | Wallet, daemon and command-line utilities (`.exe`) |
+| macOS arm64, Qt 6 GUI | Native Apple Silicon, Xcode / Apple Clang | `zcutil/build-mac-arm.sh` | Wallet, daemon, command-line utilities and `.app` |
+| Linux x86_64, no GUI | Native Linux, GCC | `zcutil/build.sh` | Daemon and command-line utilities; Qt is not built |
 
-- **Linux builds:**
-  - `build.sh` - builds only the `kmdclassicd` daemon
-  - `build-qt.sh` - builds `kmdclassicd` and the Qt wallet `kmdclassic-qt`
+All maintained GUI configurations use Qt **6.11.2** from `depends` and C++17.
+Linux and Windows use GCC; macOS uses Apple Clang. A system Qt installation
+is not required. The dependency recipes pin source versions and checksums.
 
-- **Cross-compilation from Linux:**
-  - `build-win.sh` - cross-compile for Windows from Linux
-  - `build-mac-cross.sh` - cross-compile for Mac (Intel) from Linux
-  - `build-mac-arm-cross.sh` - cross-compile for Mac (Apple Silicon) from Linux
+Linux and Windows builds have been validated on Ubuntu 22.04. The Linux GUI
+passed startup and regression tests. On Windows 11, the wallet passed isolated
+regtest startup and process-exit checks using RPC stop and window close, and
+the TLS cleanup regression test passed. The Qt 6 Windows target requires
+Windows 10 version 1809 or newer; Windows 10 runtime testing remains outstanding.
 
-- **Native Mac builds:**
-  - `build-mac.sh` - build for Intel Mac
-  - `build-mac-arm.sh` - build for Apple Silicon Mac
+The native macOS build and GUI regression tests passed on an M2 with macOS
+26.4.1, Apple Clang 21.0.0 and SDK 26.4. The deployment target is macOS 13.0;
+running on macOS 13 has not been tested. Building requires SDK 14 or newer.
 
-As you can see, almost all possible build variants are supported.
+Intel macOS, Linux-to-macOS cross-compilation, Linux ARM cross-compilation,
+Android, Qt 5 GUI builds and Debian package generation are outside the
+maintained configurations. Their old entry-point scripts have been removed.
+The remaining legacy dependency recipes do not imply support for those targets.
 
-#### Linux
+## Source checkout
 
-The following packages are needed:
-```shell
-sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 bison zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl
+Use the revision you intend to build from the
+[KmdClassic repository](https://github.com/kmdclassic/KmdClassic). The commands
+below assume a checkout containing the Qt 6 integration and are run from its
+root directory. Do not mix build products from different target platforms.
+
+## Linux prerequisites
+
+For the validated Ubuntu 22.04 build environment:
+
+```sh
+sudo apt-get update
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib \
+  autoconf automake libtool ncurses-dev unzip git python3 bison zlib1g-dev \
+  wget curl ca-certificates libcurl4-gnutls-dev bsdmainutils cmake
 ```
-Build:
-```shell
-git clone https://github.com/DeckerSU/KomodoOcean --branch static --single-branch
-cd KomodoOcean
+
+CMake 3.22 or newer is required for Qt 6. Meson, Ninja, Qt and the required
+third-party libraries are built through `depends`. Rust is also supplied by
+`depends`; a separate rustup installation is not needed for these builds.
+
+The first build downloads and compiles dependencies. Choose the job count
+according to available RAM as well as CPU count; the examples use two jobs.
+
+## Linux Qt 6 wallet
+
+```sh
+./zcutil/build-qt.sh -j2
+```
+
+Outputs include:
+
+- `src/qt/kmdclassic-qt`
+- `src/kmdclassicd`
+- `src/kmdclassic-cli`
+- `src/kmdclassic-tx`
+- `src/wallet-utility`
+
+## Linux daemon without GUI
+
+Use the same Linux prerequisites and:
+
+```sh
+./zcutil/build.sh -j2
+```
+
+This selects `NO_QT=1` for dependencies and `--with-gui=no` for the
+application. It builds `kmdclassicd` and the command-line utilities under
+`src/`, without the Qt wallet.
+
+## Windows via MinGW-w64
+
+Install the Linux prerequisites above, then the cross-toolchain:
+
+```sh
+sudo apt-get install mingw-w64
+sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+./zcutil/build-win.sh -j2
+```
+
+The POSIX thread variant is required. Outputs include
+`src/qt/kmdclassic-qt.exe`, `src/kmdclassicd.exe`,
+`src/kmdclassic-cli.exe`, `src/kmdclassic-tx.exe` and
+`src/wallet-utility.exe`. Qt and the MinGW runtime are linked statically.
+`depends` supplies a patched winpthreads runtime so that Qt thread-local
+cleanup does not hang process exit with the supported GCC 10 toolchain.
+See [doc/build-qt6.md](doc/build-qt6.md) for the upstream fix and regression test.
+
+## Native macOS on Apple Silicon
+
+Use a native arm64 shell, with Xcode installed and selected by
+`xcode-select`. Install the build tools through Homebrew:
+
+```sh
+brew install autoconf automake libtool pkg-config coreutils cmake make
+./zcutil/build-mac-arm.sh
+```
+
+The script adds the standard Apple Silicon Homebrew paths, so it also works
+over SSH. By default it limits parallel jobs to the CPU count and one job per
+3 GiB of physical RAM. To set the job count explicitly:
+
+```sh
+JOBS=2 ./zcutil/build-mac-arm.sh
+```
+
+The output directory is `build-qt6-mac-arm`, including:
+
+- `build-qt6-mac-arm/src/qt/kmdclassic-qt`
+- `build-qt6-mac-arm/src/kmdclassicd` and the command-line utilities
+- `build-qt6-mac-arm/KmdClassic-Qt.app`
+
+The bundle has an ad-hoc signature for local use. Developer ID signing and
+notarization are not performed by this script.
+
+## Build directories and switching targets
+
+`build.sh`, `build-qt.sh` and `build-win.sh` configure and build in the source
+tree. Use separate checkouts for different configurations, or run
+`make distclean` in a previously configured tree before switching targets.
+
+For simultaneous Linux and Windows builds from one source checkout, follow
+the [separate build-directory instructions](doc/build-qt6.md). The directory
+from which `configure` runs determines where application objects and binaries
+are written. `CONFIG_SITE` selects dependencies and the toolchain, not the
+output directory.
+
+The macOS script creates its separate application build directory
+automatically; `BUILD_DIR` can override it. Dependencies for all configurations
+retain their own work directories and target prefixes under `depends`.
+
+See [doc/build-qt6.md](doc/build-qt6.md) for Qt configuration details, the
+platform-specific patches, script overrides and GUI regression-test commands.
+
+## CI and Docker build environment
+
+The `build-project.yml` workflow builds Linux x86_64 and Windows x86_64 Qt 6
+wallets on a self-hosted Linux x86_64 runner with Docker. It runs for pull
+requests from this repository and on manual dispatch. Fork pull requests are
+excluded from the self-hosted runner. The manual `jobs` input controls parallel
+compilation (default: two jobs).
+
+The shared Docker image uses Ubuntu 22.04, CMake and the POSIX MinGW toolchain.
+Application builds use `build-qt6-ci-linux` and `build-qt6-ci-windows`;
+artifacts are collected in `releases/linux` and `releases/windows`. Windows
+artifacts also include `fetch-params.ps1`. A failed build or a missing binary
+fails the job. The workflow does not cross-compile
+macOS; use the native Apple Silicon script on a Mac.
+
+To run the same container build locally as a non-root user with Docker access:
+
+```sh
+BUILD_JOBS=2 ./build_releases.sh
+```
+
+Use an unconfigured source tree, as with the separate build directories above.
+The container runs the build with the caller's UID/GID so generated files
+remain writable outside Docker. The local wrapper preserves the source path
+inside Docker because cached dependency metadata can contain absolute paths.
+Reuse a dependency cache only with the same toolchain and workspace path.
+The main `Dockerfile` builds the daemon using `zcutil/build.sh`; it is separate
+from this GUI build environment.
+
+## Runtime parameters
+
+The Zcash proving parameters are needed to run the wallet/node, not to compile
+it. On the machine where the application will run, download them with:
+
+```sh
 ./zcutil/fetch-params.sh
-# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
-./zcutil/build-linux.sh -j8
 ```
-This can take some time.
-
-#### Linux (aarch64)
-
-Install the Cross-Compilation Toolchain:
-
-```shell
-sudo apt install g++-aarch64-linux-gnu
-aarch64-linux-gnu-g++ --version # verify the installation
-```
-Build:
-```shell
-./zcutil/build-aarch64-cross.sh -j8
-```
-
-#### OSX (Cross-compile)
-
-Before start, read the following docs: [depends](https://github.com/bitcoin/bitcoin/blob/master/depends/README.md), [macdeploy](https://github.com/bitcoin/bitcoin/blob/master/contrib/macdeploy/README.md) .
-
-Install dependencies:
-```
-sudo apt-get install curl librsvg2-bin libtiff-tools bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools libtinfo5 xorriso
-# sudo apt-get install libstdc++-$(g++ -dumpversion)-dev # in the event of errors occurring while building native_libtapi
-```
-
-Place prepared SDK file `Xcode-13.2.1-13C100-extracted-SDK-with-libcxx-headers.tar.gz` in repo root, use `build-mac-cross.sh` script to build.
-
-#### OSX (Native)
-For native Apple Silicon builds with Qt 6, use
-[`zcutil/build-mac-arm.sh`](zcutil/build-mac-arm.sh) and the
-[Apple Silicon instructions](doc/build-qt6.md#native-apple-silicon).
-The legacy Intel/Qt 5 instructions follow below.
-
-Ensure you have [brew](https://brew.sh) and Command Line Tools installed.
-```shell
-# Install brew
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-# Install Xcode, opens a pop-up window to install CLT without installing the entire Xcode package
-xcode-select --install 
-# Update brew and install dependencies
-brew update
-brew upgrade
-brew tap discoteq/discoteq; brew install flock
-brew install autoconf autogen automake
-brew install binutils
-brew install protobuf
-brew install coreutils
-brew install wget
-# Clone the Komodo repo
-git clone https://github.com/DeckerSU/KomodoOcean --branch static --single-branch
-# Change master branch to other branch you wish to compile
-cd komodo
-./zcutil/fetch-params.sh
-# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
-./zcutil/build-mac.sh -j8
-```
-This can take some time.
-
-macOS 12 (Monterrey) have incompatible version of Xcode `14.2` (Build version 14C18), to build on Monterrey you'll need to install the older version `13.2.1` using the following steps:
-
-- Download the specific Xcode 13.2.1 version from [here](https://stackoverflow.com/questions/10335747) or [here](https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_13.2.1/Xcode_13.2.1.xip).
-- [Install](https://stackoverflow.com/questions/43663097/how-to-install-xcode-from-xip-file) it.
-- To set default Xcode version run this command:
-```
-sudo xcode-select -switch /Applications/Xcode_13.2.1.app
-```
-- To check default Xcode version in your system use this command:
-```
-xcodebuild -version
-```
-
-#### Windows (Cross-compile)
-Use a debian cross-compilation setup with mingw for windows and run:
-```shell
-sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl cmake mingw-w64
-curl https://sh.rustup.rs -sSf | sh
-source $HOME/.cargo/env
-rustup target add x86_64-pc-windows-gnu
-
-sudo update-alternatives --config x86_64-w64-mingw32-gcc
-# (configure to use POSIX variant)
-sudo update-alternatives --config x86_64-w64-mingw32-g++
-# (configure to use POSIX variant)
-
-git clone https://github.com/DeckerSU/KomodoOcean --branch static --single-branch
-cd komodo
-./zcutil/fetch-params.sh
-# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
-./zcutil/build-win.sh -j8
-#This can take some time.
-```
-
-#### Windows proving parameters
 
 On Windows 10/11, open PowerShell in the repository root and run:
 

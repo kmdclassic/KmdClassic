@@ -2,8 +2,10 @@
 
 Linux, Windows and native Apple Silicon builds use Qt 6.11.2 from `depends`.
 Qt 6 requires C++17. Linux and Windows use GCC; native macOS uses Apple Clang.
-The application is compiled with `-std=c++17`. The Qt 5.15.11 recipe remains
-available for the existing Intel macOS, Linux-to-macOS cross-build and Android recipes.
+The application is compiled with `-std=c++17`. Supported configurations and
+their entry-point scripts are listed in [HOW-TO-BUILD.md](../HOW-TO-BUILD.md).
+The Qt 5.15.11 recipe remains in `depends` for reference; none of the supported
+GUI build scripts selects it.
 
 On Ubuntu/Debian, install the prerequisites listed in HOW-TO-BUILD.md and:
 
