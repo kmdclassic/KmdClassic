@@ -4,7 +4,8 @@ $(package)_dependencies=openssl
 $(package)_download_path=https://curl.haxx.se/download
 $(package)_file_name=curl-$($(package)_version).tar.gz
 $(package)_sha256_hash=816e41809c043ff285e8c0f06a75a1fa250211bbfb2dc0a037eeef39f1a9e427
-$(package)_config_opts=--with-openssl --disable-shared --enable-static --prefix=$(host_prefix)
+# Avoid linking optional libraries detected on the build host but absent from depends.
+$(package)_config_opts=--with-openssl --disable-shared --enable-static --prefix=$(host_prefix) --without-brotli --without-zstd --without-libpsl
 $(package)_config_opts_linux=--without-libidn2 --host=x86_64-pc-linux-gnu
 $(package)_config_opts_mingw32=--enable-mingw --host=x86_64-w64-mingw32 --disable-ldap
 $(package)_config_opts_darwin=--without-libidn2 --without-zstd

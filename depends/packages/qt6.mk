@@ -15,7 +15,8 @@ $(package)_config_opts_debug=-DCMAKE_BUILD_TYPE=Debug
 $(package)_config_opts+=-DCMAKE_CXX_STANDARD=17 -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF
 $(package)_config_opts+=-DQT_HOST_PATH=$(build_prefix) -DQT_FORCE_FIND_TOOLS=ON
 $(package)_config_opts+=-DCMAKE_PREFIX_PATH=$(host_prefix) -DINSTALL_LIBEXECDIR=libexec
-$(package)_config_opts+=-DFEATURE_opengl=OFF -DFEATURE_dynamicgl=OFF -DFEATURE_vulkan=OFF -DFEATURE_icu=OFF
+# Qt's summary also checks INPUT_opengl, even when all OpenGL features are off.
+$(package)_config_opts+=-DINPUT_opengl=no -DFEATURE_opengl=OFF -DFEATURE_dynamicgl=OFF -DFEATURE_vulkan=OFF -DFEATURE_icu=OFF
 $(package)_config_opts+=-DFEATURE_openssl=OFF -DFEATURE_sql=OFF -DFEATURE_testlib=ON
 $(package)_config_opts+=-DFEATURE_system_zlib=OFF -DFEATURE_system_pcre2=OFF
 $(package)_config_opts+=-DFEATURE_system_png=OFF -DFEATURE_system_harfbuzz=OFF
