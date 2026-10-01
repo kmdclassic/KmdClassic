@@ -127,3 +127,35 @@ cd komodo
 #This can take some time.
 ```
 
+#### Windows proving parameters
+
+On Windows 10/11, open PowerShell in the repository root and run:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\zcutil\fetch-params.ps1
+```
+
+This uses the built-in Windows PowerShell 5.1 commands and needs no `wget`,
+`curl`, package installation or administrator privileges. `ExecutionPolicy`
+applies only to this invocation; it does not change the machine's policy.
+Files are stored in `%APPDATA%\ZcashParams`, matching the wallet's default
+parameter directory:
+
+- `sapling-spend.params`
+- `sapling-output.params`
+- `sprout-groth16.params`
+
+The script verifies SHA-256 for existing and downloaded files, skips valid
+files, and retries failed downloads up to three times. A replacement is
+installed only after verification; incomplete downloads are not used by the
+wallet. One download process at a time can use the destination directory.
+Optional `-ParamsDir` and `-Attempts` arguments override the destination and
+retry count. A custom destination is useful for preparing files for another
+machine; copy them into that Windows user's `%APPDATA%\ZcashParams` before
+starting the wallet.
+
+The older `.bat` downloader remains available for existing setups.
+
+The PowerShell downloader has been checked with Windows PowerShell 5.1 on
+Windows 11, including a real parameter download, existing-file verification,
+checksum rejection, retries, locking and cleanup after download failures.

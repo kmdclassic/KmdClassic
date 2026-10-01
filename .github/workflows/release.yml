@@ -242,6 +242,7 @@ jobs:
           fi
           
           # Create zip archive
+          cp zcutil/fetch-params.ps1 "${RELEASE_DIR}/"
           zip -r "kmdclassic-windows-${TAG_NAME}.zip" "${RELEASE_DIR}/"
           ls -lh "kmdclassic-windows-${TAG_NAME}.zip"
           

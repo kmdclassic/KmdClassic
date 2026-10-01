@@ -391,6 +391,7 @@ clean-local:
 	rm -rf dist/ dpi36.background.tiff dpi72.background.tiff
 
 EXTRA_DIST += doc/build-qt6.md build-aux/qt6/CMakeLists.txt build-aux/qt6/probe.cpp build-aux/qt6/configure.py
+EXTRA_DIST += zcutil/fetch-params.ps1
 
 # CMake caches compiler and target platform information.
 distclean-local:
