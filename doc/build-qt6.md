@@ -90,6 +90,9 @@ Windows platform plugin and Linux D-Bus support remain enabled. On MinGW,
 `stack_clash_protection` is disabled to avoid an internal compiler error in
 GCC 10's SEH unwind emitter; Qt's stack protector remains enabled.
 
+Both `INPUT_opengl=no` and the OpenGL feature switches are set: Qt's configure
+summary otherwise still requires OpenGL development files in a clean container.
+
 The patches under `depends/patches/qt6/` allow the Windows API headers from
 MinGW-w64 8.0 (as packaged with GCC 10 on Ubuntu 22.04) to
 skip unavailable thread QoS and D3D12 debug-layer APIs and provide missing
