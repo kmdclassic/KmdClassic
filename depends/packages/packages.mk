@@ -13,6 +13,7 @@ ifeq ($(build_os)_$(host_arch),darwin_aarch64)
 qt_darwin_packages=qt6 qt6_translations
 endif
 qt_mingw32_packages=qt6 qt6_translations
+mingw32_packages=winpthreads
 
 
 rust_crates := \

@@ -103,14 +103,44 @@ MinGW-w64 8.0 headers lack the required interfaces. Linux accessibility remains
 enabled. Windows fonts use the GDI backend. The Qt 6 Windows target requires
 Windows 10 version 1809 or newer.
 
+Windows builds also use a static `winpthreads` from `depends`, compatible with
+MinGW-w64 8.0 and carrying upstream commit
+[`8e06daa36`](https://github.com/mingw-w64/mingw-w64/commit/8e06daa36dfcea4bb491acf4b350658f40738f02).
+It runs TLS destructors before GCC's emulated TLS storage is freed. The old
+runtime can fault while cleaning up a Qt thread, leave its pthread key lock
+held and hang in `pthread_key_delete` after `main()` returns. Thus even
+`Shutdown: done` and closed GUI windows do not establish that the process exited.
+The fix is in the dependency runtime; normal application shutdown is preserved.
+
+The isolated regression test exercises both QThread and adopted C++ threads,
+checks TLS storage during destruction and must also exit within a timeout:
+
+```sh
+make -C build-qt6-windows/src -j2 qt/test/threadlocal_tests.exe
+```
+
+Copy the test executable to Windows and run in PowerShell:
+
+```powershell
+$p = Start-Process .\threadlocal_tests.exe -PassThru
+$null = $p.Handle
+if (!$p.WaitForExit(15000)) { $p.Kill(); throw 'TLS cleanup hung at process exit' }
+if ($p.ExitCode -ne 0) { throw "TLS cleanup failed: $($p.ExitCode)" }
+```
+
+On Linux, build `qt/test/threadlocal_tests` and run it with `timeout 15s`.
+This test uses QCoreApplication and does not require a display or wallet files.
+
 Validated on Ubuntu 22.04 with GCC 11.4.0 for Linux and
 `x86_64-w64-mingw32-g++-posix` 10 with MinGW-w64 8.0 headers for Windows.
 Both complete depends builds and application builds passed using the commands
 above, with BIP70, tests and benchmarks disabled. The Linux wallet passed
 `-version` and `-help` startup checks under Xvfb. The Windows wallet is an
 x86-64 GUI PE executable and imports only Windows system DLLs; Qt, libstdc++,
-libgcc, libssp and winpthreads are linked statically. Windows execution has
-not been tested in this Linux environment.
+libgcc, libssp and winpthreads are linked statically. Native Windows 11 checks
+also passed: regtest startup, RPC stop, window-close shutdown and the TLS
+regression test above. Full blockchain synchronization and Windows 10 runtime
+testing are not covered by these checks.
 
 ## Native Apple Silicon
 

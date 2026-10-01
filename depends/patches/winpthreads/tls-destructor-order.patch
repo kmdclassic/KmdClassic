@@ -1,0 +1,30 @@
+Backport mingw-w64 commit 8e06daa36dfcea4bb491acf4b350658f40738f02:
+"winpthreads: Run thread dtors in reverse order" by Martin Storsjo.
+https://github.com/mingw-w64/mingw-w64/commit/8e06daa36dfcea4bb491acf4b350658f40738f02
+
+GCC's emutls key is registered before libstdc++'s destructor key. Run
+destructors before freeing the storage they access. With Qt 6 QThread,
+the old order causes an access violation during DLL_THREAD_DETACH and
+leaves the pthread key lock held, hanging process exit in pthread_key_delete.
+
+--- a/mingw-w64-libraries/winpthreads/src/thread.c
++++ b/mingw-w64-libraries/winpthreads/src/thread.c
+@@ -944,7 +944,8 @@
+ _pthread_cleanup_dest (pthread_t t)
+ {
+ 	_pthread_v *tv;
+-	unsigned int i, j;
++	unsigned int j;
++	int i;
+ 
+ 	if (!t)
+ 		return;
+@@ -957,7 +958,7 @@
+ 		int flag = 0;
+ 
+ 		pthread_spin_lock (&tv->spin_keys);
+-		for (i = 0; i < tv->keymax; i++)
++		for (i = tv->keymax - 1; i >= 0; i--)
+ 		{
+ 			void *val = tv->keyval[i];
+ 

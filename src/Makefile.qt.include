@@ -496,7 +496,7 @@ qt_kmdclassic_qt_LIBTOOLFLAGS = --tag CXX
 
 if ENABLE_WALLET
 # Build explicitly even when the larger core test suite is disabled.
-EXTRA_PROGRAMS = qt/test/modelindex_tests qt/test/viewnotes_tests qt/test/shutdown_tests
+EXTRA_PROGRAMS = qt/test/modelindex_tests qt/test/viewnotes_tests qt/test/shutdown_tests qt/test/threadlocal_tests
 qt_test_modelindex_tests_SOURCES = qt/test/modelindex_tests.cpp
 qt_test_modelindex_tests_CPPFLAGS = $(qt_libkomodoqt_a_CPPFLAGS)
 qt_test_modelindex_tests_CXXFLAGS = $(qt_libkomodoqt_a_CXXFLAGS)
@@ -517,6 +517,12 @@ qt_test_shutdown_tests_CXXFLAGS = $(qt_test_modelindex_tests_CXXFLAGS)
 qt_test_shutdown_tests_LDADD = $(qt_test_modelindex_tests_LDADD)
 qt_test_shutdown_tests_DEPENDENCIES = $(qt_test_modelindex_tests_DEPENDENCIES) qt/komodoapp.moc
 qt_test_shutdown_tests_LDFLAGS = $(qt_test_modelindex_tests_LDFLAGS)
+# Also check process exit: old MinGW TLS cleanup can hang after main returns.
+qt_test_threadlocal_tests_SOURCES = qt/test/threadlocal_tests.cpp
+qt_test_threadlocal_tests_CPPFLAGS = $(qt_libkomodoqt_a_CPPFLAGS)
+qt_test_threadlocal_tests_CXXFLAGS = $(qt_libkomodoqt_a_CXXFLAGS)
+qt_test_threadlocal_tests_LDADD = $(QT_LIBS)
+qt_test_threadlocal_tests_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 if ENABLE_TESTS
 check_PROGRAMS = qt/test/modelindex_tests qt/test/viewnotes_tests
 TESTS += qt/test/modelindex_tests qt/test/viewnotes_tests
