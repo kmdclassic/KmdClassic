@@ -1,20 +1,27 @@
-# https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action
-name: 'Build project in docker'
-description: 'Create docker image with build environment and build the project'
+name: 'Build Qt 6 wallets in Docker'
+description: 'Build Linux x86_64 and Windows x86_64 wallets on Ubuntu 22.04'
 inputs:
   builder-name:
+    description: 'Container user name'
     required: true
     default: 'builder'
   builder-uid:
+    description: 'UID of the workspace owner'
     required: true
-    default: 1000
+    default: '1000'
   builder-gid:
+    description: 'GID of the workspace owner'
     required: true
-    default: 1000
+    default: '1000'
+  jobs:
+    description: 'Parallel build jobs'
+    required: false
+    default: '2'
 runs:
   using: 'docker'
-  image: 'Dockerfile.focal.ci'
+  image: 'Dockerfile'
   env:
     BUILDER_NAME: ${{ inputs.builder-name }}
     BUILDER_UID: ${{ inputs.builder-uid }}
     BUILDER_GID: ${{ inputs.builder-gid }}
+    BUILD_JOBS: ${{ inputs.jobs }}

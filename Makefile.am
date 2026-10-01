@@ -37,7 +37,7 @@ OSX_PLIST=$(top_builddir)/share/qt/Info.plist #not installed
 OSX_QT_TRANSLATIONS = da,de,es,hu,ru,uk,zh_CN,zh_TW
 endif
 
-DIST_DOCS = $(wildcard doc/*.md) $(wildcard doc/release-notes/*.md)
+DIST_DOCS = HOW-TO-BUILD.md $(wildcard doc/*.md) $(wildcard doc/release-notes/*.md)
 
 BIN_CHECKS=$(top_srcdir)/contrib/devtools/symbol-check.py \
            $(top_srcdir)/contrib/devtools/security-check.py
@@ -373,7 +373,8 @@ check-local:
 endif
 
 dist_bin_SCRIPTS = zcutil/fetch-params.sh
-dist_noinst_SCRIPTS = autogen.sh zcutil/build-debian-package.sh zcutil/build.sh
+dist_noinst_SCRIPTS = autogen.sh zcutil/build.sh zcutil/build-qt.sh \
+  zcutil/build-win.sh zcutil/build-mac-arm.sh
 
 EXTRA_DIST = $(top_srcdir)/share/genbuild.sh qa/pull-tester/rpc-tests.sh qa/pull-tester/run-komodo-cli qa/rpc-tests qa/zcash $(DIST_DOCS) $(BIN_CHECKS)
 

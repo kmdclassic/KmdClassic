@@ -36,6 +36,7 @@ jobs:
             unzip \
             git \
             python3 \
+            cmake \
             bison \
             zlib1g-dev \
             wget \
@@ -147,6 +148,7 @@ jobs:
             unzip \
             git \
             python3 \
+            cmake \
             bison \
             zlib1g-dev \
             wget \

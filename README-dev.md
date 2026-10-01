@@ -1,12 +1,8 @@
 # Scribbles of madman
 
-This branch is planned to be universal for all 3 OS (Linux, Windows, MacOS).
-## todo
-
-- Build subsystem: after build win version, if we want to build linux version for example with `build-linux.sh`, univalue and cryptoconditions dirs needs to be cleaned with `make clean` from previous build. otherwise it will not be linked
-- Check Mac build with static libs
-- Remove unneeded `build-*.sh` files
-- Check *.deb package build
+These are historical development notes. Current build configurations and
+separate build-directory instructions are documented in
+[HOW-TO-BUILD.md](HOW-TO-BUILD.md) and [doc/build-qt6.md](doc/build-qt6.md).
 
 ## dev notes
 

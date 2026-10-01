@@ -94,7 +94,7 @@ RUN set -euxo pipefail \
       && ( gpgconf --kill dirmngr || true ) \
       && ( gpgconf --kill gpg-agent || true ); \
     fi \
-    && export MAKEFLAGS="-j $(($(nproc)-1))" && ./zcutil/build-no-qt.sh
+    && export MAKEFLAGS="-j $(($(nproc)-1))" && ./zcutil/build.sh
 
 ## Build Final Image
 FROM ubuntu:20.04
