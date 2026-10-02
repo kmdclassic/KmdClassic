@@ -124,7 +124,7 @@ jobs:
   build-windows:
     runs-on: ubuntu-22.04
     name: Build Windows binaries
-    timeout-minutes: 120
+    timeout-minutes: 150
     
     steps:
       - name: Checkout repository
